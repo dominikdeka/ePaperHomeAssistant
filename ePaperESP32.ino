@@ -1,5 +1,9 @@
-//TODO - refresh co godzinę, start wifi, daty do struktury, rezygnacja po x - próbach, pomiar prądu
+//TODO -  start wifi, daty do struktury, poziom baterii, refactoring, README
+//DONE - refresh co godzinę, rezygnacja po x - próbach, obsługa trybów, git
 #define ENABLE_GxEPD2_GFX 0
+#define TIME_TO_SLEEP 1800       /* Time ESP32 will go to sleep (in seconds, max value 1800) */
+#define WAKEUP_SKIP 2 /* Skip every n wakups to save battery */ 
+#define MAX_ATTEMPTS 4
 
 #include "credentials.h"
 #include "settings.h"
@@ -7,7 +11,6 @@
 
 #include <GxEPD2_BW.h> // v1.5.3
 #include <Fonts/FreeSerif9pt7b.h>
-
 #include <Fonts/FreeSerifBold12pt7b.h>
 #include <Fonts/FreeSerifBold24pt7b.h>
 
@@ -30,7 +33,6 @@ Forecast_record_type  WxForecast[max_readings];
 #include "wheather_common.h"
 
 
-String calendarEvents = "";
 typedef struct {
     String start;
     std::vector<String> events;
@@ -63,11 +65,12 @@ mqttTopic mqttTopics[6] = {
 };
 
 struct ApplicationState {
-    byte currentPhase;
-    int currentPhaseStart;
-    byte viewMode;
+  byte wakeupCount;
+  byte currentPhase;
+  int currentPhaseStart;
+  byte viewMode;
 };
-RTC_DATA_ATTR struct ApplicationState applicationState = {0, 0, 0};
+RTC_DATA_ATTR struct ApplicationState applicationState = {0, 0, 0, 0};
 
 String modes[] = { "kompaktowy", "kalendarz", "pogoda"};
 String phases[] = { "  ...", " laczenie wifi...", " pobieranie pomiarow...", " pobieranie kalendarza...",  " pobieranie prognozy...", " drukowanie...", "" };
@@ -78,14 +81,20 @@ String phases[] = { "  ...", " laczenie wifi...", " pobieranie pomiarow...", " p
 WiFiClient wifiClient;
 PubSubClient mqttClient(wifiClient);
 
+#include <ezButton.h>
+#define DEBOUNCE_TIME 100 // the debounce time in millisecond, increase this time if it still chatters
+
 #define GPIO_BIT_MASK ((1ULL << GPIO_NUM_32) | (1ULL << GPIO_NUM_35))
+ezButton button1(33); // create ezButton object that attach to pin GPIO33;
+ezButton button2(32); // create ezButton object that attach to pin GPIO32;
+ezButton button3(35); // create ezButton object that attach to pin GPIO35;
 
 void setup()
 {
   Serial.begin(115200);
   while(!Serial){delay(100);}
 
-  wakeupReason();
+  setStateOnWakeup();
   delay(500);
   // *** special handling for Waveshare ESP32 Driver board *** //
   // ********************************************************* //
@@ -95,6 +104,11 @@ void setup()
   // **************************************************************** //
 
   display.init(115200);
+
+  // setup buttons
+  button1.setDebounceTime(DEBOUNCE_TIME);
+  button2.setDebounceTime(DEBOUNCE_TIME);
+  button3.setDebounceTime(DEBOUNCE_TIME);
 
   //setup mqtt
   mqttClient.setServer(mqtt_server, mqtt_server_port);
@@ -146,28 +160,30 @@ void loop()
     readDateTime();
   }
   if (applicationState.currentPhase == 2) { // collecting mqtt data
-
+    byte Attempts = 1;
     if (!mqttClient.connected()) {
       mqttReconnect();
+      Attempts++;
     }
     mqttClient.loop();
-    if(mqttDataCollected()){
+    if(mqttDataCollected() || Attempts > MAX_ATTEMPTS){
       nextPhase();
     }
   }
   if (applicationState.currentPhase == 3) { // collecting GCal events
-    do {
+    byte Attempts = 1;
+    while (calEvents.empty() && Attempts <= MAX_ATTEMPTS) {
       readCalendarEvents();
-    } while (calendarEvents == "");
+      Attempts++;
+    };
     nextPhase();
   }
   if (applicationState.currentPhase == 4) { // collecting wheather data
     byte Attempts = 1;
     bool RxWeather = false, RxForecast = false;
-    WiFiClient client;   // wifi client object
-    while ((RxWeather == false || RxForecast == false) && Attempts <= 2) { // Try up-to 2 time for Weather and Forecast data
-      if (RxWeather  == false) RxWeather  = obtain_wx_data(client, "weather");
-      if (RxForecast == false) RxForecast = obtain_wx_data(client, "forecast");
+    while ((RxWeather == false || RxForecast == false) && Attempts <= MAX_ATTEMPTS) { // Try up-to 2 time for Weather and Forecast data
+      if (RxWeather  == false) RxWeather  = obtain_wx_data(wifiClient, "weather");
+      if (RxForecast == false) RxForecast = obtain_wx_data(wifiClient, "forecast");
       Attempts++;
     }    
     StopWiFi();
@@ -202,15 +218,17 @@ void changeViewMode(bool up = true){
   Serial.println(applicationState.viewMode);
 }
 
-void wakeupReason() {
+void setStateOnWakeup() {
   esp_sleep_wakeup_cause_t wakeup_reason;
   wakeup_reason = esp_sleep_get_wakeup_cause();
 
   switch(wakeup_reason)
   {
-    case ESP_SLEEP_WAKEUP_EXT0 : Serial.println("Wakeup caused by external signal using RESET"); break;
+    case ESP_SLEEP_WAKEUP_EXT0 :
+      Serial.println("Wakeup caused by external signal using RESET");
+      applicationState.wakeupCount = 0;
+      break;
     case ESP_SLEEP_WAKEUP_EXT1 : 
-      Serial.println("Wakeup caused by external signal using CURSOR");
       if (digitalRead(GPIO_NUM_32) == HIGH) {
         changeViewMode();
         Serial.println("GPIO_NUM_32 was triggered");
@@ -219,9 +237,19 @@ void wakeupReason() {
         changeViewMode(false);
         Serial.println("GPIO_NUM_35 was triggered");
       }
+      applicationState.wakeupCount = 0;
       break;
-    case ESP_SLEEP_WAKEUP_TIMER : Serial.println("Wakeup caused by timer"); break;
-    default : Serial.printf("Wakeup was not caused by deep sleep: %d\n", wakeup_reason); break;
+    case ESP_SLEEP_WAKEUP_TIMER :
+      Serial.println("Wakeup caused by timer");
+      applicationState.wakeupCount = applicationState.wakeupCount + 1;
+      if ((applicationState.wakeupCount + 1) % WAKEUP_SKIP == 0) {
+        deepSleep();  
+      }
+      break;
+    default :
+      Serial.printf("Wakeup was not caused by deep sleep: %d\n", wakeup_reason);
+      applicationState.wakeupCount = 0;
+      break;
   }
 }
 
@@ -256,9 +284,8 @@ boolean mqttDataCollected() {
   //   displayMqttData();
   // }
 }
-#define uS_TO_S_FACTOR 1000000  /* Conversion factor for micro seconds to seconds */
-#define TIME_TO_SLEEP  1200       /* Time ESP32 will go to sleep (in seconds) */
 void deepSleep() {
+  int uS_TO_S_FACTOR = 1000000;
   esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);
   esp_sleep_enable_ext0_wakeup(GPIO_NUM_33,0);
   esp_sleep_enable_ext1_wakeup(GPIO_BIT_MASK,ESP_EXT1_WAKEUP_ANY_HIGH);
@@ -400,7 +427,6 @@ void readCalendarEvents(void)
               calEvents.push_back(date);
               // [i].start = start;
               // calEvents[i].events = events;
-              calendarEvents = "payload";
             }
           } else {
             Serial.println("Error: Array expected");
