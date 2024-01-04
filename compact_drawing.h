@@ -207,13 +207,13 @@ void displayConditionsSection(int x, int y, int width, String IconName) {
   display.setFont(&FreeSerif9pt7b);
   String cloudCover = String(WxConditions[0].Cloudcover) + "%";
   display.getTextBounds(cloudCover, 0, 0, &tbx, &tby, &tbw, &tbh);
-  display.setCursor(iconCentreX + 30, iconCentreY - 10 - tby);
+  display.setCursor(iconCentreX + 20, iconCentreY - 10 - tby);
   display.print(cloudCover);
   accuw = tbw;
 
   String humidity = TXT_HUMIDITY + ": " + String(WxConditions[0].Humidity, 0) + "%";
   display.getTextBounds(humidity, 0, 0, &tbx, &tby, &tbw, &tbh);
-  display.setCursor(iconCentreX + 34 + accuw + 5, iconCentreY - 10 - tby);
+  display.setCursor(iconCentreX + 24 + accuw + 5, iconCentreY - 10 - tby);
   display.print(humidity);
 
   String temperature = TXT_TEMPERATURES + ": " + String(WxConditions[0].Temperature, 1) + "*C (" + String(WxConditions[0].High, 0) + "*|" + String(WxConditions[0].Low, 0) + "*)";
@@ -266,7 +266,7 @@ int displayWeather(int leftOffset) {
   const byte padding = 5;
 
   display.setRotation(0);
-  display.setFont(&FreeSerifBold12pt7b);
+  display.setFont(&FreeSerif12pt7b);
   display.setTextColor(GxEPD_BLACK);
 
   byte topicsNumber = sizeof(mqttTopics) / sizeof(mqttTopic);
@@ -336,6 +336,7 @@ int displayCalendarData() {
   const int offset = 35;
   const int padding = 5;
   display.setRotation(0);
+  display.setFont(&FreeSerif12pt7b);
 
   byte daysNumber = calEvents.size();
   typedef struct {
@@ -372,8 +373,6 @@ int displayCalendarData() {
   }
 
 
-  display.setFont(&FreeSerifBold12pt7b);
-  // display.setPartialWindow(0, offset, tbw_date + 10, tbh_max * eventCounter + padding * 2);
   display.setPartialWindow(0, offset, tbw_date + tbw_max + 10, tbh_max * eventCounter + padding * 2);
   display.firstPage();
   do

@@ -34,32 +34,30 @@ bool DecodeWeather(WiFiClient& json, String Type) {
   Serial.println(" Decoding " + Type + " data");
   if (Type == "weather") {
     // All Serial.println statements are for diagnostic purposes and not required, remove if not needed
-    WxConditions[0].lon         = root["coord"]["lon"].as<float>();                    Serial.println(" Lon: "+String(WxConditions[0].lon));
-    WxConditions[0].lat         = root["coord"]["lat"].as<float>();                    Serial.println(" Lat: "+String(WxConditions[0].lat));
-    WxConditions[0].Main0       = root["weather"][0]["main"].as<const char*>();        Serial.println("Main: "+String(WxConditions[0].Main0));
-    WxConditions[0].Forecast0   = root["weather"][0]["description"].as<const char*>(); Serial.println("For0: "+String(WxConditions[0].Forecast0));
-    WxConditions[0].Forecast1   = root["weather"][1]["description"].as<const char*>(); Serial.println("For1: "+String(WxConditions[0].Forecast1));
-    WxConditions[0].Forecast2   = root["weather"][2]["description"].as<const char*>(); Serial.println("For2: "+String(WxConditions[0].Forecast2));
-    WxConditions[0].Icon        = root["weather"][0]["icon"].as<const char*>();        Serial.println("Icon: "+String(WxConditions[0].Icon));
-    WxConditions[0].Temperature = root["main"]["temp"].as<float>();                    Serial.println("Temp: "+String(WxConditions[0].Temperature));
-    WxConditions[0].Pressure    = root["main"]["pressure"].as<float>();                Serial.println("Pres: "+String(WxConditions[0].Pressure));
-    WxConditions[0].Humidity    = root["main"]["humidity"].as<float>();                Serial.println("Humi: "+String(WxConditions[0].Humidity));
-    WxConditions[0].Low         = root["main"]["temp_min"].as<float>();                Serial.println("TLow: "+String(WxConditions[0].Low));
-    WxConditions[0].High        = root["main"]["temp_max"].as<float>();                Serial.println("THig: "+String(WxConditions[0].High));
-    WxConditions[0].Windspeed   = root["wind"]["speed"].as<float>();                   Serial.println("WSpd: "+String(WxConditions[0].Windspeed));
-    WxConditions[0].Winddir     = root["wind"]["deg"].as<float>();                     Serial.println("WDir: "+String(WxConditions[0].Winddir));
-    WxConditions[0].Cloudcover  = root["clouds"]["all"].as<int>();                     Serial.println("CCov: "+String(WxConditions[0].Cloudcover)); // in % of cloud cover
-    WxConditions[0].Visibility  = root["visibility"].as<int>();                        Serial.println("Visi: "+String(WxConditions[0].Visibility)); // in metres
-    WxConditions[0].Rainfall    = root["rain"]["1h"].as<float>();                      Serial.println("Rain: "+String(WxConditions[0].Rainfall));
-    WxConditions[0].Snowfall    = root["snow"]["1h"].as<float>();                      Serial.println("Snow: "+String(WxConditions[0].Snowfall));
-    WxConditions[0].Country     = root["sys"]["country"].as<const char*>();            Serial.println("Ctry: "+String(WxConditions[0].Country));
-    WxConditions[0].Sunrise     = root["sys"]["sunrise"].as<int>();                    Serial.println("SRis: "+String(WxConditions[0].Sunrise));
-    WxConditions[0].Sunset      = root["sys"]["sunset"].as<int>();                     Serial.println("SSet: "+String(WxConditions[0].Sunset));
-    WxConditions[0].Timezone    = root["timezone"].as<int>();                          Serial.println("TZon: "+String(WxConditions[0].Timezone));
+    WxConditions[0].lon         = root["coord"]["lon"].as<float>();
+    WxConditions[0].lat         = root["coord"]["lat"].as<float>();
+    WxConditions[0].Main0       = root["weather"][0]["main"].as<const char*>();
+    WxConditions[0].Forecast0   = root["weather"][0]["description"].as<const char*>();
+    WxConditions[0].Forecast1   = root["weather"][1]["description"].as<const char*>();
+    WxConditions[0].Forecast2   = root["weather"][2]["description"].as<const char*>();
+    WxConditions[0].Icon        = root["weather"][0]["icon"].as<const char*>();
+    WxConditions[0].Temperature = root["main"]["temp"].as<float>();
+    WxConditions[0].Pressure    = root["main"]["pressure"].as<float>();
+    WxConditions[0].Humidity    = root["main"]["humidity"].as<float>();
+    WxConditions[0].Low         = root["main"]["temp_min"].as<float>();
+    WxConditions[0].High        = root["main"]["temp_max"].as<float>();
+    WxConditions[0].Windspeed   = root["wind"]["speed"].as<float>();
+    WxConditions[0].Winddir     = root["wind"]["deg"].as<float>();
+    WxConditions[0].Cloudcover  = root["clouds"]["all"].as<int>();
+    WxConditions[0].Visibility  = root["visibility"].as<int>();
+    WxConditions[0].Rainfall    = root["rain"]["1h"].as<float>();
+    WxConditions[0].Snowfall    = root["snow"]["1h"].as<float>();
+    WxConditions[0].Country     = root["sys"]["country"].as<const char*>();
+    WxConditions[0].Sunrise     = root["sys"]["sunrise"].as<int>();
+    WxConditions[0].Sunset      = root["sys"]["sunset"].as<int>();
+    WxConditions[0].Timezone    = root["timezone"].as<int>();
   }
   if (Type == "forecast") {
-    //Serial.println(json);
-    Serial.print(F("\nReceiving Forecast period - ")); //------------------------------------------------
     JsonArray list                    = root["list"];
     for (byte r = 0; r < max_readings; r++) {
       WxForecast[r].Dt                = list[r]["dt"].as<int>();

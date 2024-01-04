@@ -1,5 +1,5 @@
-//TODO -  start wifi, daty do struktury, poziom baterii, refactoring, README
-//DONE - refresh co godzinę, rezygnacja po x - próbach, obsługa trybów, git
+//TODO -  start wifi, daty do struktury, refactoring, README,, rezygnacja po x - próbach (co robić gdy się nie uda)
+//DONE - refresh co godzinę, rezygnacja po x - próbach, obsługa trybów, git, poziom baterii
 #define ENABLE_GxEPD2_GFX 0
 #define TIME_TO_SLEEP 1800       /* Time ESP32 will go to sleep (in seconds, max value 1800) */
 #define WAKEUP_SKIP 2 /* Skip every n wakups to save battery */ 
@@ -12,6 +12,7 @@
 #include <GxEPD2_BW.h> // v1.5.3
 #include <Fonts/FreeSerif9pt7b.h>
 #include <Fonts/FreeSerifBold12pt7b.h>
+#include <Fonts/FreeSerif12pt7b.h>
 #include <Fonts/FreeSerifBold24pt7b.h>
 
 // select the display class and display driver class in the following file (new style):
@@ -205,7 +206,11 @@ void loop()
     deepSleep();
   }
 }
-
+String voltage() {
+  int analogValue = analogRead(34);
+  float analogVolts = (analogValue*3.3*2)/4096;
+  return String(analogVolts);
+}
 void changeViewMode(bool up = true){
   int secondsFromBoot = millis() / 1000;
   applicationState.currentPhaseStart = secondsFromBoot;
@@ -255,6 +260,7 @@ void setStateOnWakeup() {
 
 void nextPhase() {
   setApplicationPhase(applicationState.currentPhase + 1);
+  Serial.println("Voltage: " +voltage());
   displayCurrentState();
 }
 
@@ -348,8 +354,6 @@ void mqttReconnect() {
 // if a mqtt message arrives from the broker
 //--------------------------------------
 void mqttCallback(char* topic, byte* payload, unsigned int length) {
-  Serial.print("Message arrived on topic: '");
-  Serial.println(topic);
   char tmp[length+1];
   for (unsigned int i = 0; i < length; i++) {
     tmp[i] = (char)payload[i];
@@ -385,11 +389,11 @@ void readDateTime(){
   strftime(update_time, sizeof(update_time), "%H:%M:%S", &timeinfo);  // Creates: '14:05:49'
   sprintf(time_output, "%s %s", TXT_UPDATED, update_time);
   lastUpdate = String(time_output);
-  phases[6] = lastUpdate;  
-  Serial.println("Week: " + weekDay);  
-  Serial.println("Month: " + month);  
-  Serial.println("Date: " + date);  
-  Serial.println("Last update: " + lastUpdate);  
+  phases[6] = lastUpdate + " bateria: " + voltage() + 'v';  
+  // Serial.println("Week: " + weekDay);  
+  // Serial.println("Month: " + month);  
+  // Serial.println("Date: " + date);  
+  // Serial.println("Last update: " + lastUpdate);  
 }
 void readCalendarEvents(void)
 {
