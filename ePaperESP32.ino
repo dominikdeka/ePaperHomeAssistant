@@ -1,19 +1,21 @@
-//TODO -  start wifi, daty do struktury, refactoring, README,, rezygnacja po x - próbach (co robić gdy się nie uda)
-//DONE - refresh co godzinę, rezygnacja po x - próbach, obsługa trybów, git, poziom baterii
+//TODO - u8g2, struktura mqtt do poprawki, Google script do repo, refactoring, rezygnacja po x - próbach (co robić gdy się nie uda) + deep sleep (battery below some level)
+//DONE - daty do struktury, refresh co godzinę, rezygnacja po x - próbach, obsługa trybów, git, poziom baterii, README
 #define ENABLE_GxEPD2_GFX 0
-#define TIME_TO_SLEEP 1800       /* Time ESP32 will go to sleep (in seconds, max value 1800) */
+#define TIME_TO_SLEEP 1800       /* Time ESP32 will go to sleep (in seconds, max value 1800 = 30m) */
 #define WAKEUP_SKIP 2 /* Skip every n wakups to save battery */ 
-#define MAX_ATTEMPTS 4
+#define MAX_ATTEMPTS 4 /* Give up after MAX_ATTEMPTS try to connect any service */ 
 
 #include "credentials.h"
 #include "settings.h"
 #include "wheather_lang_pl.h"                  // Localisation (Polish)
+#include "images.h"
 
 #include <GxEPD2_BW.h> // v1.5.3
 #include <Fonts/FreeSerif9pt7b.h>
 #include <Fonts/FreeSerifBold12pt7b.h>
 #include <Fonts/FreeSerif12pt7b.h>
 #include <Fonts/FreeSerifBold24pt7b.h>
+#include <U8g2_for_Adafruit_GFX.h>
 
 // select the display class and display driver class in the following file (new style):
 #include "GxEPD2_display_selection.h"
@@ -26,37 +28,21 @@
 #include <HTTPClient.h> // v2.2.0
 #include <ArduinoJson.h> // v6.21.3
 
-#include "wheather_forecast_record.h"
+U8G2_FOR_ADAFRUIT_GFX u8g2Fonts;
+
+// global variables
+#include "structures.h"
 #define max_readings 24
-Forecast_record_type  WxConditions[1];
-Forecast_record_type  WxForecast[max_readings];
-
-#include "wheather_common.h"
-
-
-typedef struct {
-    String start;
-    std::vector<String> events;
-} calDate;
-std::vector<calDate> calEvents;
-
-String month = "";
-String weekDay = "";
-String date = "";  
-String lastUpdate = "";
+ForecastRecord WxConditions[1];
+ForecastRecord WxForecast[max_readings];
+std::vector<CalendarData> calEvents;
+DateTime dateTime;
 
 //--------------------------------------
 // globals
 //--------------------------------------
-typedef struct {
-    const String tempName;
-    const String humName;
-    const String label;
-    String tempValue;
-    String humValue;
-} mqttTopic;
 
-mqttTopic mqttTopics[6] = {
+MqttTopic mqttTopics[6] = {
   {"dominikdeka@gmail.com/temperature/taras", "dominikdeka@gmail.com/hummidity/taras", "piwnica", "", ""},
   {"dominikdeka@gmail.com/temperature/loundry", "dominikdeka@gmail.com/hummidity/loundry", "pralnia", "", ""},
   {"dominikdeka@gmail.com/temperature/front", "dominikdeka@gmail.com/hummidity/front", "zewnetrzna", "", ""},
@@ -65,27 +51,22 @@ mqttTopic mqttTopics[6] = {
   {"dominikdeka@gmail.com/temperature/bedroom", "dominikdeka@gmail.com/hummidity/bedroom", "poddasze", "", ""},
 };
 
-struct ApplicationState {
-  byte wakeupCount;
-  byte currentPhase;
-  int currentPhaseStart;
-  byte viewMode;
-};
-RTC_DATA_ATTR struct ApplicationState applicationState = {0, 0, 0, 0};
+RTC_DATA_ATTR ApplicationState applicationState = {0, 0, 0, 0};
 
 String modes[] = { "kompaktowy", "kalendarz", "pogoda"};
-String phases[] = { "  ...", " laczenie wifi...", " pobieranie pomiarow...", " pobieranie kalendarza...",  " pobieranie prognozy...", " drukowanie...", "" };
+String phases[] = { " laczenie wifi...", " pobieranie czasu...", " pobieranie odczytow...", " pobieranie kalendarza...",  " pobieranie prognozy...", " drukowanie...", "" };
 
+#include "wheather_common.h"
 #include "wheather_drawing.h"
 #include "compact_drawing.h"
 
 WiFiClient wifiClient;
 PubSubClient mqttClient(wifiClient);
 
+#define GPIO_BIT_MASK ((1ULL << GPIO_NUM_32) | (1ULL << GPIO_NUM_35))
+
 #include <ezButton.h>
 #define DEBOUNCE_TIME 100 // the debounce time in millisecond, increase this time if it still chatters
-
-#define GPIO_BIT_MASK ((1ULL << GPIO_NUM_32) | (1ULL << GPIO_NUM_35))
 ezButton button1(33); // create ezButton object that attach to pin GPIO33;
 ezButton button2(32); // create ezButton object that attach to pin GPIO32;
 ezButton button3(35); // create ezButton object that attach to pin GPIO35;
@@ -104,7 +85,9 @@ void setup()
   // *** end of special handling for Waveshare ESP32 Driver board *** //
   // **************************************************************** //
 
-  display.init(115200);
+  display.init(false);
+  u8g2Fonts.begin(display); // connect u8g2 procedures to Adafruit GFX
+  delay(2000);
 
   // setup buttons
   button1.setDebounceTime(DEBOUNCE_TIME);
@@ -121,44 +104,25 @@ void setup()
 
 void loop()
 {
-  if (applicationState.currentPhase == 0) { // drawing phase
-    clearScreen();
-    // setApplicationPhase(6);
-    // displayCurrentState();
+  if (applicationState.currentPhase == 0) { // connecting wifi
+    displayCurrentState();
+    if (connectWiFi() == true) {
+      nextPhase();
+    } else {
+      phases[6] = "WiFi connection failed";
+      setApplicationPhase(6);
+      displayCurrentState();
 
-    nextPhase();
-  }
-  // if (applicationState.currentPhase == 1) { // listen to buttons to set mode
-  //   button1.loop();
-  //   if (button1.isPressed()) {
-  //     button1.loop(); // reset button object state
-  //     Serial.println(button1.getCount());
-  //     changeViewMode();
-  //     printCurrentState();
-  //   }
-  //   int secondsFromBoot = millis() / 1000;
-  //   if (secondsFromBoot - applicationState.currentPhaseStart > 5) {
-  //     nextPhase();
-  //   }
-
-  // }
-  if (applicationState.currentPhase == 1) { // connecting wifi
-    // We start by connecting to a WiFi network
-
-    Serial.print("Connecting to ");
-    Serial.println(ssid);
-
-    WiFi.begin(ssid, password);
-
-    while (WiFi.status() != WL_CONNECTED) {
-        delay(500);
-        Serial.print(".");
     }
-
-    Serial.println("");
-    Serial.println("WiFi connected");
-    nextPhase();
-    readDateTime();
+  }
+  if (applicationState.currentPhase == 1) { // reading time
+    if (readDateTime() == true) {
+      nextPhase();
+    } else {
+      phases[6] = "Failed to obtain time";
+      setApplicationPhase(6);
+      displayCurrentState();
+    }
   }
   if (applicationState.currentPhase == 2) { // collecting mqtt data
     byte Attempts = 1;
@@ -206,10 +170,10 @@ void loop()
     deepSleep();
   }
 }
-String voltage() {
+float voltage() {
   int analogValue = analogRead(34);
   float analogVolts = (analogValue*3.3*2)/4096;
-  return String(analogVolts);
+  return analogVolts;
 }
 void changeViewMode(bool up = true){
   int secondsFromBoot = millis() / 1000;
@@ -260,7 +224,7 @@ void setStateOnWakeup() {
 
 void nextPhase() {
   setApplicationPhase(applicationState.currentPhase + 1);
-  Serial.println("Voltage: " +voltage());
+  applicationState.voltage = voltage();
   displayCurrentState();
 }
 
@@ -274,22 +238,15 @@ void setApplicationPhase(byte phase) {
 
 boolean mqttDataCollected() {
   boolean collected = true;
-  for(unsigned i = 0; i < sizeof(mqttTopics) / sizeof(mqttTopic); i++) {
+  for(unsigned i = 0; i < sizeof(mqttTopics) / sizeof(MqttTopic); i++) {
     if ((mqttTopics[i].tempValue == "") || (mqttTopics[i].humValue == "")) {
       collected = false;
       break;
     }
   }
-  // if (message.equals("")) {
-  //   collected = false;
-  // }
   return collected;
-  // if (collected) {
-  //   Serial.println("Collected");
-  //   // Serial.println(message);
-  //   displayMqttData();
-  // }
 }
+
 void deepSleep() {
   int uS_TO_S_FACTOR = 1000000;
   esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);
@@ -330,7 +287,7 @@ void clearScreen()
 
 void mqttReconnect() {
   // Loop until we're reconnected
-  byte topicsNumber = sizeof(mqttTopics) / sizeof(mqttTopic);
+  byte topicsNumber = sizeof(mqttTopics) / sizeof(MqttTopic);
   while (!mqttClient.connected()) {
     Serial.print("Attempting MQTT connection...");
     // Attempt to connect
@@ -360,7 +317,7 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
   }
   tmp[length] = 0;
 
-  for(unsigned i = 0; i < sizeof(mqttTopics) / sizeof(mqttTopic); i++) {
+  for(unsigned i = 0; i < sizeof(mqttTopics) / sizeof(MqttTopic); i++) {
     if (mqttTopics[i].tempName == topic) {
       mqttTopics[i].tempValue = tmp;
     }
@@ -371,115 +328,110 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
   // String myCurrentTime = timeClient.getFormattedTime();
   // mqttClient.publish(mqttTopicOut,("ESP8266: Cedalo Mosquitto is awesome. ESP8266-Time: " + myCurrentTime).c_str());
 }
-void readDateTime(){
+boolean readDateTime(){
   configTime(gmtOffset_sec, daylightOffset_sec, ntpServer, "time.nist.gov"); //(gmtOffset_sec, daylightOffset_sec, ntpServer)
   setenv("TZ", Timezone, 1);  //setenv()adds the "TZ" variable to the environment with a value TimeZone, only used if set to 1, 0 means no change
   tzset(); // Set the TZ environment variable
   delay(100);
   struct tm timeinfo;
   while (!getLocalTime(&timeinfo, 10000)) { // Wait for 10-sec for time to synchronise
-    Serial.println("Failed to obtain time");
-    // return false;
+    return false;
   }
 
-  month = month_M[timeinfo.tm_mon];
-  weekDay = weekday_D[timeinfo.tm_wday];
-  date = String(timeinfo.tm_mday);
+  dateTime.month = month_M[timeinfo.tm_mon];
+  dateTime.weekDay = weekday_D[timeinfo.tm_wday];
+  dateTime.date = String(timeinfo.tm_mday);
   char time_output[30], update_time[30];
   strftime(update_time, sizeof(update_time), "%H:%M:%S", &timeinfo);  // Creates: '14:05:49'
   sprintf(time_output, "%s %s", TXT_UPDATED, update_time);
-  lastUpdate = String(time_output);
-  phases[6] = lastUpdate + " bateria: " + voltage() + 'v';  
-  // Serial.println("Week: " + weekDay);  
-  // Serial.println("Month: " + month);  
-  // Serial.println("Date: " + date);  
-  // Serial.println("Last update: " + lastUpdate);  
+  dateTime.lastUpdate = time_output;
+  phases[6] = dateTime.lastUpdate; //TODO: setFinalStatus?
+  return true;
 }
 void readCalendarEvents(void)
 {
-  if (WiFi.status() == WL_CONNECTED) {
-    HTTPClient http;
-    String url = "https://script.google.com/macros/s/" + GOOGLE_SCRIPT_ID + "/exec";
-    http.begin(url);
-    http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
-    Serial.println(url);
+  HTTPClient http;
+  String url = "https://script.google.com/macros/s/" + GOOGLE_SCRIPT_ID + "/exec";
+  http.begin(url);
+  http.setFollowRedirects(HTTPC_STRICT_FOLLOW_REDIRECTS);
+  Serial.println(url);
+  delay(100);
 
-    int httpCode = http.GET();
-    if (httpCode > 0) {
-      if (httpCode == HTTP_CODE_OK) {
-        String payload = http.getString();
+  int httpCode = http.GET();
+  if (httpCode > 0) {
+    if (httpCode == HTTP_CODE_OK) {
+      String payload = http.getString();
 
-        DynamicJsonDocument doc(2048);
-        DeserializationError error = deserializeJson(doc, payload);
+      DynamicJsonDocument doc(2048);
+      DeserializationError error = deserializeJson(doc, payload);
 
-        if (error) {
-          Serial.print("DeserializationError: ");
-          Serial.println(error.c_str());
-        } else {
-          if (doc.is<JsonArray>() && doc.size() > 0) {
-            byte size = doc.size();
-            for (byte i = 0; i < size; i++) {
-              String start = doc[i]["start"];
-              calDate date;
-              date.start = start;
-              byte eventsSize = doc[i]["events"].size();
-              // std::vector<String> events;
-              for (byte j = 0; j < eventsSize; j++) {
-                  date.events.push_back(doc[i]["events"][j]); // (*it)[0] == vec[i][0]
-              }
-
-              calEvents.push_back(date);
-              // [i].start = start;
-              // calEvents[i].events = events;
-            }
-          } else {
-            Serial.println("Error: Array expected");
-          }
-        }
+      if (error) {
+        Serial.print("DeserializationError: ");
+        Serial.println(error.c_str());
       } else {
-        Serial.print("HTTP response error ");
-        Serial.println(httpCode);
+        if (doc.is<JsonArray>() && doc.size() > 0) {
+          byte size = doc.size();
+          for (byte i = 0; i < size; i++) {
+            String start = doc[i]["start"];
+            CalendarData date;
+            date.start = start;
+            byte eventsSize = doc[i]["events"].size();
+            // std::vector<String> events;
+            for (byte j = 0; j < eventsSize; j++) {
+                date.events.push_back(doc[i]["events"][j]); // (*it)[0] == vec[i][0]
+            }
+
+            calEvents.push_back(date);
+            // [i].start = start;
+            // calEvents[i].events = events;
+          }
+        } else {
+          Serial.println("Error: Array expected");
+        }
       }
     } else {
-      Serial.print("HTTP request error ");
+      Serial.print("HTTP response error ");
       Serial.println(httpCode);
     }
-
-    http.end();
+  } else {
+    Serial.print("HTTP request error ");
+    Serial.println(httpCode);
   }
+
+  http.end();
 
 }
 
-//TODO #########################################################################################
-// uint8_t StartWiFi() {
-//   Serial.print("\r\nConnecting to: "); Serial.println(String(ssid));
-//   IPAddress dns(8, 8, 8, 8); // Google DNS
-//   WiFi.disconnect();
-//   WiFi.mode(WIFI_STA); // switch off AP
-//   WiFi.setAutoConnect(true);
-//   WiFi.setAutoReconnect(true);
-//   WiFi.begin(ssid, password);
-//   unsigned long start = millis();
-//   uint8_t connectionStatus;
-//   bool AttemptConnection = true;
-//   while (AttemptConnection) {
-//     connectionStatus = WiFi.status();
-//     if (millis() > start + 15000) { // Wait 15-secs maximum
-//       AttemptConnection = false;
-//     }
-//     if (connectionStatus == WL_CONNECTED || connectionStatus == WL_CONNECT_FAILED) {
-//       AttemptConnection = false;
-//     }
-//     delay(50);
-//   }
-//   if (connectionStatus == WL_CONNECTED) {
-//     wifi_signal = WiFi.RSSI(); // Get Wifi Signal strength now, because the WiFi will be turned off to save power!
-//     Serial.println("WiFi connected at: " + WiFi.localIP().toString());
-//   }
-//   else Serial.println("WiFi connection *** FAILED ***");
-//   return connectionStatus;
-// }
-// //#########################################################################################
+uint8_t connectWiFi() {
+  IPAddress dns(8, 8, 8, 8); // Google DNS
+  WiFi.disconnect();
+  WiFi.mode(WIFI_STA); // switch off AP
+  WiFi.setAutoConnect(true);
+  WiFi.setAutoReconnect(true);
+  WiFi.begin(ssid, password);
+  unsigned long start = millis();
+  uint8_t connectionStatus;
+  bool AttemptConnection = true;
+  while (AttemptConnection) {
+    connectionStatus = WiFi.status();
+    if (millis() > start + 15000) { // Wait 15-secs maximum
+      AttemptConnection = false;
+    }
+    if (connectionStatus == WL_CONNECTED || connectionStatus == WL_CONNECT_FAILED) {
+      AttemptConnection = false;
+    }
+    delay(50);
+  }
+  if (connectionStatus == WL_CONNECTED) {
+    Serial.println("WiFi connected at: " + WiFi.localIP().toString());
+    return true;
+  }
+  else {
+    Serial.println("WiFi connection *** FAILED ***");
+    return false;
+  } 
+}
+
 void StopWiFi() {
   WiFi.disconnect();
   WiFi.mode(WIFI_OFF);

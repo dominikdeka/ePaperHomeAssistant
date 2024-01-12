@@ -16,7 +16,6 @@ void arrow(int x, int y, int asize, float aangle, int pwidth, int plength);
 void DisplayStatusSection(int x, int y, int rssi);
 void DrawRSSI(int x, int y, int rssi);
 boolean SetupTime();
-void SetupTime2();
 boolean UpdateLocalTime();
 void DrawBattery(int x, int y);
 void addcloud(int x, int y, int scale, int linesize);

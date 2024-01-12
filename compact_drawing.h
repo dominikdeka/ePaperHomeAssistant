@@ -24,8 +24,8 @@ void displayCurrentState() {
   byte modesNo = sizeof(modes) / sizeof(String);
   Bounds modesBounds[3];
   int accuw = 0;
+  int16_t tbx, tby; uint16_t tbw, tbh;
   for(int i = modesNo - 1; i >= 0; i--) {
-    int16_t tbx, tby; uint16_t tbw, tbh;
     display.getTextBounds(modes[i], accuw, 0, &tbx, &tby, &tbw, &tbh);
     accuw += tbw;
     modesBounds[i] = {tbx, tby, tbw, tbh};
@@ -35,12 +35,18 @@ void displayCurrentState() {
   uint16_t maxh = bounds.tbh;
 
   String phaseMsg = phases[applicationState.currentPhase];
-  bounds = getMaxBounds(phases, sizeof(phases) / sizeof(String));
-  uint16_t phaseX = 0 - bounds.tbx;
-  uint16_t phaseY = 0 - bounds.tby;
-  if (bounds.tbh > maxh) {
-    maxh = bounds.tbh;
+  display.getTextBounds(phaseMsg, 0, 0, &tbx, &tby, &tbw, &tbh);
+  int16_t phaseX = 0 - tbx;
+  int16_t phaseY = 0 - tby;
+  uint16_t phaseW = tbw;
+  if (tbh > maxh) {
+    maxh = tbh;
   }
+
+  String batteryMsg = "bateria: " + String(applicationState.voltage) + 'V';
+  display.getTextBounds(batteryMsg, 0, 0, &tbx, &tby, &tbw, &tbh);
+  uint16_t batteryX = (display.width() - 30 - accuw + phaseW)/2 - tbw/2 - bounds.tbx;
+  uint16_t batteryY = 0 - bounds.tby;
 
   display.setPartialWindow(0, 0, display.width(), maxh + 8);
   display.firstPage();
@@ -59,6 +65,9 @@ void displayCurrentState() {
       display.print(modes[i]);
       display.setTextColor(GxEPD_BLACK);
     }
+
+    display.setCursor(batteryX, batteryY + 5);
+    display.print(batteryMsg);
 
     display.setCursor(phaseX, phaseY + 5);
     display.print(phaseMsg);
@@ -126,9 +135,19 @@ void drawGraph(int x_pos, int y_pos, int gwidth, int gheight, float Y1Min, float
         drawString(x_pos - 2, y_pos + gheight * spacing / y_minor_axis - 5, String((Y1Max - (float)(Y1Max - Y1Min) / y_minor_axis * spacing + 0.01), 0), RIGHT);
     }
   }
-  for (int i = 0; i <= 2; i++) {
-    drawString(15 + x_pos + gwidth / 3 * i, y_pos + gheight + 3, String(i), LEFT);
+
+  String lastDate = String(WxForecast[0].Period.substring(0,10));
+  int day1X, day2X, day3X;
+  for (int gx = 0; gx < readings; gx++) {
+    if(String(WxForecast[gx].Period.substring(0,10)) != lastDate) {
+      lastDate = String(WxForecast[gx].Period.substring(0,10));
+      x2 = x_pos + gx * (gwidth / readings) + 2;
+      drawString(x2, y_pos + gheight + 3, "|", LEFT);
+    }
   }
+  // for (int i = 0; i <= 2; i++) {
+  //   drawString(15 + x_pos + gwidth / 3 * i, y_pos + gheight + 3, "|", LEFT);
+  // }
 }
 
 void displayForecastWeather(int x, int y, int index, int width) {
@@ -198,7 +217,7 @@ void displayConditionsSection(int x, int y, int width, String IconName) {
   // display.setCursor(x + (width - tbw) / 2, y + 5 - tby);
   // display.print(TXT_FORECAST);
 
-  iconCentreX = iconCentreX + 100;
+  iconCentreX = iconCentreX + 90;
   iconCentreY = iconCentreY - 45;
 
   addcloud(iconCentreX - 9, iconCentreY - 3, Small * 0.5, 2); // Cloud top left
@@ -230,14 +249,10 @@ void displayConditionsSection(int x, int y, int width, String IconName) {
   display.setCursor(iconCentreX - 20, iconCentreY - tby + 2 * tbh);
   display.print(preasure);
 
-  // display.setFont(&FreeSerif9pt7b);
-  // drawString(x, y - 125, TXT_CONDITIONS, CENTER);
-  // display.setFont(&FreeSerif9pt7b);
-  // drawString(x - 25, y + 70, String(WxConditions[0].Humidity, 0) + "%", CENTER);
-  // display.setFont(&FreeSerif9pt7b);
-  // drawString(x + 35, y + 80, "RH", CENTER);
-  // if (WxConditions[0].Visibility > 0) Visibility(x - 62, y - 87, String(WxConditions[0].Visibility) + "M");
-  // if (WxConditions[0].Cloudcover > 0) CloudCover(x + 35, y - 87, WxConditions[0].Cloudcover);
+  String sunrise = TXT_SUNRISE + ": " + ConvertUnixTime(WxConditions[0].Sunrise + WxConditions[0].Timezone).substring(0, 5) + " " + TXT_SUNSET + ": " + ConvertUnixTime(WxConditions[0].Sunset + WxConditions[0].Timezone).substring(0, 5);
+  display.getTextBounds(sunrise, 0, 0, &tbx, &tby, &tbw, &tbh);
+  display.setCursor(iconCentreX - 20, iconCentreY + 15 - tby + 3 * tbh);
+  display.print(sunrise);
 }
 
 void displayToday(int leftOffset, int topOffset, int width, int height) {
@@ -246,19 +261,19 @@ void displayToday(int leftOffset, int topOffset, int width, int height) {
   display.setTextColor(GxEPD_BLACK);
   int16_t tbx, tby; uint16_t tbw, tbh;
   display.setFont(&FreeSerif9pt7b);
-  display.getTextBounds(month, 0, 0, &tbx, &tby, &tbw, &tbh);
+  display.getTextBounds(dateTime.month, 0, 0, &tbx, &tby, &tbw, &tbh);
   display.setCursor(leftOffset + (width - tbw) / 2, topOffset + 5 - tby);
-  display.print(month);
+  display.print(dateTime.month);
 
   display.setFont(&FreeSerifBold24pt7b);
-  display.getTextBounds(date, 0, 0, &tbx, &tby, &tbw, &tbh);
+  display.getTextBounds(dateTime.date, 0, 0, &tbx, &tby, &tbw, &tbh);
   display.setCursor(leftOffset + (width - tbw) / 2, topOffset + (height - tbh) / 2 - tby);
-  display.print(date);
+  display.print(dateTime.date);
 
   display.setFont(&FreeSerif9pt7b);
-  display.getTextBounds(weekDay, 0, 0, &tbx, &tby, &tbw, &tbh);
+  display.getTextBounds(dateTime.weekDay, 0, 0, &tbx, &tby, &tbw, &tbh);
   display.setCursor(leftOffset + (width - tbw) / 2, topOffset + height - tbh - tby - 5);
-  display.print(weekDay);
+  display.print(dateTime.weekDay);
 }
 
 int displayWeather(int leftOffset) {
@@ -266,10 +281,10 @@ int displayWeather(int leftOffset) {
   const byte padding = 5;
 
   display.setRotation(0);
-  display.setFont(&FreeSerif12pt7b);
+  display.setFont(&FreeSerif9pt7b);
   display.setTextColor(GxEPD_BLACK);
 
-  byte topicsNumber = sizeof(mqttTopics) / sizeof(mqttTopic);
+  byte topicsNumber = sizeof(mqttTopics) / sizeof(MqttTopic);
   byte otherNumber = 0;
   String values[topicsNumber + otherNumber];
   String labels[topicsNumber + otherNumber];
@@ -277,7 +292,7 @@ int displayWeather(int leftOffset) {
   struct Bounds labelsBounds[topicsNumber + otherNumber];
   for(byte i = 0; i < topicsNumber + otherNumber; i++) {
     labels[i] = mqttTopics[i].label + ": ";
-    values[i] = mqttTopics[i].tempValue + " C/" + mqttTopics[i].humValue + "%";
+    values[i] = mqttTopics[i].tempValue + "*C/" + mqttTopics[i].humValue + "%";
   }
 
   // labels[topicsNumber + 2] = "cisnienie:";
@@ -299,29 +314,51 @@ int displayWeather(int leftOffset) {
     // Serial.print(tby);
   Bounds maxValuesBounds = getMaxBounds(values, topicsNumber + otherNumber);
   Bounds maxLabelsBounds = getMaxBounds(labels, topicsNumber + otherNumber);
-  int tableWidth = maxValuesBounds.tbw + maxLabelsBounds.tbw + 10 + (2 * padding);
-  int tableHeight = maxLabelsBounds.tbh * (topicsNumber + otherNumber) + (2 * padding);
+  int tableWidth = 200; //maxValuesBounds.tbw + maxLabelsBounds.tbw + 10 + (2 * padding);
+  int tableHeight = 140; //maxLabelsBounds.tbh * (topicsNumber + otherNumber) + (2 * padding);
+  Serial.println(String(tableHeight));
+  Serial.println(String(maxValuesBounds.tbw));
+  Serial.println(String(maxLabelsBounds.tbw));
   int tableLeftOffset = display.width() - tableWidth;
   int todayWitdth = display.width() - tableWidth - leftOffset - 5;
   display.setPartialWindow(leftOffset, topOffset, display.width() - leftOffset, display.height()- topOffset);
   display.firstPage();
+  // display.cp437(true);
   do
   {
 
-    display.fillRect(tableLeftOffset + maxLabelsBounds.tbw + 5, topOffset, maxValuesBounds.tbw + 5 + padding, tableHeight, GxEPD_BLACK);
-    for(byte i = 0; i < topicsNumber + otherNumber; i++) {
+    // display.fillRect(display.width() - 200, topOffset, 200, 140, GxEPD_BLACK);
+    // display.fillRect(GxEPD_WHITE);
+    display.drawBitmap(display.width() - 200, topOffset, home, 200, 140, GxEPD_BLACK);
 
-      uint16_t x = tableLeftOffset + 10 + maxLabelsBounds.tbw;
-      uint16_t y = topOffset + padding + (maxLabelsBounds.tbh * i) - valuesBounds[i].tby;
-      display.setTextColor(GxEPD_WHITE);
-      display.setCursor(x, y);
-      display.print(values[i]);
-      x = tableLeftOffset + maxLabelsBounds.tbw - labelsBounds[i].tbw;
-      y = topOffset + padding + (maxLabelsBounds.tbh * i) - labelsBounds[i].tby;
-      display.setTextColor(GxEPD_BLACK);
-      display.setCursor(x, y);
-      display.print(labels[i]);
-    }
+    u8g2Fonts.setForegroundColor(GxEPD_BLACK);         // apply Adafruit GFX color
+    u8g2Fonts.setBackgroundColor(GxEPD_WHITE);         // apply Adafruit GFX color
+    u8g2Fonts.setFont(u8g2_font_helvB12_tf);
+    u8g2Fonts.setCursor(tableLeftOffset + 61, topOffset + 28);
+    u8g2Fonts.print(mqttTopics[5].tempValue + "°");
+    u8g2Fonts.setCursor(tableLeftOffset + 61, topOffset + 63);
+    u8g2Fonts.print(mqttTopics[4].tempValue + "°");
+    u8g2Fonts.setCursor(tableLeftOffset + 61, topOffset + 98);
+    u8g2Fonts.print(mqttTopics[3].tempValue + "°");
+    u8g2Fonts.setCursor(tableLeftOffset + 61, topOffset + 133);
+    u8g2Fonts.print(mqttTopics[1].tempValue + "°");
+    u8g2Fonts.setCursor(tableLeftOffset + 130, topOffset + 133);
+    u8g2Fonts.print(mqttTopics[0].tempValue + "°");
+    u8g2Fonts.setCursor(tableLeftOffset + 130, topOffset + 63);
+    u8g2Fonts.print(mqttTopics[2].tempValue + "°");
+    // for(byte i = 0; i < topicsNumber + otherNumber; i++) {
+
+    //   uint16_t x = tableLeftOffset + 10 + maxLabelsBounds.tbw;
+    //   uint16_t y = topOffset + padding + (maxLabelsBounds.tbh * i) - valuesBounds[i].tby;
+    //   display.setTextColor(GxEPD_BLACK);
+    //   display.setCursor(x, y);
+    //   display.print(values[i]);
+    //   // x = tableLeftOffset + maxLabelsBounds.tbw - labelsBounds[i].tbw;
+    //   // y = topOffset + padding + (maxLabelsBounds.tbh * i) - labelsBounds[i].tby;
+    //   // display.setTextColor(GxEPD_BLACK);
+    //   // display.setCursor(x, y);
+    //   // display.print(labels[i]);
+    // }
     displayConditionsSection(leftOffset, topOffset + tableHeight, display.width() - leftOffset, WxConditions[0].Icon);
     displayForecastSection(leftOffset, topOffset + tableHeight + 120, display.width() - leftOffset);
     displayToday(leftOffset, topOffset, todayWitdth, tableHeight);
@@ -346,17 +383,25 @@ int displayCalendarData() {
   std::vector<calDateBounds> calEventBounds;
 
 
-  int16_t tbx_date, tby_date; uint16_t tbw_date, tbh_date;
-  display.getTextBounds(calEvents[0].start, 0, 0, &tbx_date, &tby_date, &tbw_date, &tbh_date);
+  uint16_t tbw_date_max, tbh_date_max;
+  uint16_t tbw_max, tbh_max;
+  // display.getTextBounds(calEvents[0].start, 0, 0, &tbx_date, &tby_date, &tbw_date, &tbh_date);
   byte eventCounter = 0;
-  uint16_t tbw_max = tbw_date, tbh_max = tbh_date;
   for(byte i = 0; i < daysNumber; i++) {
+    int16_t tbx, tby; uint16_t tbw, tbh;
+    display.getTextBounds(calEvents[i].start, 0, 0, &tbx, &tby, &tbw, &tbh);
+    if (tbw > tbw_date_max) {
+      tbw_date_max = tbw;
+    }
+    if (tbh > tbh_date_max) {
+      tbh_date_max = tbh;
+    }
+
     calDateBounds bounds;
-    bounds.start = {tbx_date, tby_date, tbw_date, tbh_date};
+    bounds.start = {tbx, tby, tbw, tbh};
 
     byte eventsNumber = calEvents[i].events.size();
     for(byte j = 0; j < eventsNumber; j++) {
-      int16_t tbx, tby; uint16_t tbw, tbh;
       display.getTextBounds(calEvents[i].events[j], 0, 0, &tbx, &tby, &tbw, &tbh);
 
       if (tbw > tbw_max) {
@@ -373,13 +418,13 @@ int displayCalendarData() {
   }
 
 
-  display.setPartialWindow(0, offset, tbw_date + tbw_max + 10, tbh_max * eventCounter + padding * 2);
+  display.setPartialWindow(0, offset, tbw_date_max + tbw_max + 10, tbh_max * eventCounter + padding * 2);
   display.firstPage();
   do
   {
     display.setTextColor(GxEPD_WHITE);
     display.fillScreen(GxEPD_WHITE);
-    display.fillRect(0, offset, tbw_date + 10, tbh_max * eventCounter + padding * 2, GxEPD_BLACK);    
+    display.fillRect(0, offset, tbw_date_max + 10, tbh_date_max * eventCounter + padding * 2, GxEPD_BLACK);    
     byte eventCounter = 0;
     for(byte i = 0; i < daysNumber; i++) {
 
@@ -405,7 +450,7 @@ int displayCalendarData() {
     for(byte i = 0; i < daysNumber; i++) {
       byte eventsNumber = calEvents[i].events.size();
       for(byte j = 0; j < eventsNumber; j++) {
-        uint16_t w = tbw_date + 15 - calEventBounds[i].events[j].tbx;
+        uint16_t w = tbw_date_max + 15 - calEventBounds[i].events[j].tbx;
         uint16_t z = offset + padding + (eventCounter * tbh_max) - calEventBounds[i].events[j].tby;
         display.setCursor(w, z);
         display.print(calEvents[i].events[j]);
@@ -415,7 +460,7 @@ int displayCalendarData() {
   }
   while (display.nextPage());
 
-  return tbw_date + tbw_max + 25;
+  return tbw_date_max + tbw_max + 25;
 }
 
 struct Bounds getMaxBounds(String words[], byte size) {
