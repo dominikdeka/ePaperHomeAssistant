@@ -1,5 +1,4 @@
 //TODO - u8g2, struktura mqtt do poprawki, Google script do repo, refactoring, rezygnacja po x - próbach (co robić gdy się nie uda) + deep sleep (battery below some level)
-//DONE - daty do struktury, refresh co godzinę, rezygnacja po x - próbach, obsługa trybów, git, poziom baterii, README
 #define ENABLE_GxEPD2_GFX 0
 #define TIME_TO_SLEEP 1800       /* Time ESP32 will go to sleep (in seconds, max value 1800 = 30m) */
 #define WAKEUP_SKIP 2 /* Skip every n wakups to save battery */ 
@@ -65,12 +64,6 @@ PubSubClient mqttClient(wifiClient);
 
 #define GPIO_BIT_MASK ((1ULL << GPIO_NUM_32) | (1ULL << GPIO_NUM_35))
 
-#include <ezButton.h>
-#define DEBOUNCE_TIME 100 // the debounce time in millisecond, increase this time if it still chatters
-ezButton button1(33); // create ezButton object that attach to pin GPIO33;
-ezButton button2(32); // create ezButton object that attach to pin GPIO32;
-ezButton button3(35); // create ezButton object that attach to pin GPIO35;
-
 void setup()
 {
   Serial.begin(115200);
@@ -87,12 +80,11 @@ void setup()
 
   display.init(false);
   u8g2Fonts.begin(display); // connect u8g2 procedures to Adafruit GFX
-  delay(2000);
+  u8g2Fonts.setForegroundColor(GxEPD_BLACK);         // apply Adafruit GFX color
+  u8g2Fonts.setBackgroundColor(GxEPD_WHITE);         // apply Adafruit GFX color
+  u8g2Fonts.setFont(u8g2_font_helvB12_tf);
 
-  // setup buttons
-  button1.setDebounceTime(DEBOUNCE_TIME);
-  button2.setDebounceTime(DEBOUNCE_TIME);
-  button3.setDebounceTime(DEBOUNCE_TIME);
+  delay(2000);
 
   //setup mqtt
   mqttClient.setServer(mqtt_server, mqtt_server_port);
@@ -251,6 +243,8 @@ void deepSleep() {
   int uS_TO_S_FACTOR = 1000000;
   esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);
   esp_sleep_enable_ext0_wakeup(GPIO_NUM_33,0);
+  pinMode(GPIO_NUM_33, INPUT_PULLUP);
+
   esp_sleep_enable_ext1_wakeup(GPIO_BIT_MASK,ESP_EXT1_WAKEUP_ANY_HIGH);
   
   Serial.println("Going to sleep now");

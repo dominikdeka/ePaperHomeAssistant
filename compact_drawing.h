@@ -331,9 +331,6 @@ int displayWeather(int leftOffset) {
     // display.fillRect(GxEPD_WHITE);
     display.drawBitmap(display.width() - 200, topOffset, home, 200, 140, GxEPD_BLACK);
 
-    u8g2Fonts.setForegroundColor(GxEPD_BLACK);         // apply Adafruit GFX color
-    u8g2Fonts.setBackgroundColor(GxEPD_WHITE);         // apply Adafruit GFX color
-    u8g2Fonts.setFont(u8g2_font_helvB12_tf);
     u8g2Fonts.setCursor(tableLeftOffset + 61, topOffset + 28);
     u8g2Fonts.print(mqttTopics[5].tempValue + "°");
     u8g2Fonts.setCursor(tableLeftOffset + 61, topOffset + 63);
