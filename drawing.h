@@ -5,14 +5,29 @@ struct Bounds {
     uint16_t tbh;
 };
 
+// String  Time_str, Date_str; // strings to hold time and received weather data
+// int     wifi_signal, CurrentHour = 0, CurrentMin = 0, CurrentSec = 0;
+// long    StartTime = 0;
+
+#define autoscale_on  true
+#define autoscale_off false
+#define barchart_on   true
+#define barchart_off  false
+
+float pressure_readings[max_readings]    = {0};
+float temperature_readings[max_readings] = {0};
+float humidity_readings[max_readings]    = {0};
+float rain_readings[max_readings]        = {0};
+float snow_readings[max_readings]        = {0};
+
+void displayCurrentState();
+void drawGraph(int x_pos, int y_pos, int gwidth, int gheight, float Y1Min, float Y1Max, String title, float DataArray[], int readings, boolean auto_scale, boolean barchart_mode);
+void displayForecastWeather(int x, int y, int index, int width);
+void displayForecastSection(int x, int y);
 void displayConditionsSection(int x, int y, int width, String IconName);
 void displayToday(int leftOffset, int topOffset, int width, int height);
 int displayWeather(int leftOffset);
 int displayCalendarData();
-void displayForecastSection(int x, int y);
-void displayForecastWeather(int x, int y, int index, int width);
-void displayCurrentState();
-void drawGraph(int x_pos, int y_pos, int gwidth, int gheight, float Y1Min, float Y1Max, String title, float DataArray[], int readings, boolean auto_scale, boolean barchart_mode);
 struct Bounds getMaxBounds(String words[], byte size);
 
 void displayCurrentState() {
@@ -156,7 +171,7 @@ void displayForecastWeather(int x, int y, int index, int width) {
   x = offset + x + fwidth * index;
   display.drawRect(x, y, fwidth - 1, 81, GxEPD_BLACK);
   display.drawLine(x, y + 17, x + fwidth - 3, y + 17, GxEPD_BLACK);
-  DisplayConditionsSection(x + fwidth / 2, y + 43, WxForecast[index].Icon, SmallIcon);
+  displayWheatherIcon(x + fwidth / 2, y + 43, WxForecast[index].Icon, SmallIcon);
   drawString(x + fwidth / 2, y + 1, String(ConvertUnixTime(WxForecast[index].Dt + WxConditions[0].Timezone).substring(0,5)), CENTER);
   drawString(x + fwidth / 2 + 12, y + 65, String(WxForecast[index].High, 0) + "*/" + String(WxForecast[index].Low, 0) + "*", CENTER);
 }
@@ -195,20 +210,21 @@ void displayForecastSection(int x, int y, int width) {
     drawGraph(x + gx + 1 * gap + 5, gy, gwidth, gheight, 0, 30, Units == "M" ? TXT_RAINFALL_MM : TXT_RAINFALL_IN, rain_readings, Rain_array_size, autoscale_on, barchart_on);
   else drawGraph(x + gx + 1 * gap + 5, gy, gwidth, gheight, 0, 30, Units == "M" ? TXT_SNOWFALL_MM : TXT_SNOWFALL_IN, snow_readings, Snow_array_size, autoscale_on, barchart_on);
 }
-
+//#########################################################################################
 void displayConditionsSection(int x, int y, int width, String IconName) {
   int iconCentreX = x + 86; int iconCentreY =  y + 70;
-  if      (IconName == "01d" || IconName == "01n")  Sunny(iconCentreX,iconCentreY, LargeIcon, IconName);
-  else if (IconName == "02d" || IconName == "02n")  MostlySunny(iconCentreX, iconCentreY, LargeIcon, IconName);
-  else if (IconName == "03d" || IconName == "03n")  Cloudy(iconCentreX, iconCentreY, LargeIcon, IconName);
-  else if (IconName == "04d" || IconName == "04n")  MostlyCloudy(iconCentreX, iconCentreY, LargeIcon, IconName);
-  else if (IconName == "09d" || IconName == "09n")  ChanceRain(iconCentreX, iconCentreY, LargeIcon, IconName);
-  else if (IconName == "10d" || IconName == "10n")  Rain(iconCentreX, iconCentreY, LargeIcon, IconName);
-  else if (IconName == "11d" || IconName == "11n")  Tstorms(iconCentreX, iconCentreY, LargeIcon, IconName);
-  else if (IconName == "13d" || IconName == "13n")  Snow(iconCentreX, iconCentreY, LargeIcon, IconName);
-  else if (IconName == "50d")                       Haze(iconCentreX, iconCentreY, LargeIcon, IconName);
-  else if (IconName == "50n")                       Fog(iconCentreX, iconCentreY, LargeIcon, IconName);
-  else                                              Nodata(iconCentreX, iconCentreY, LargeIcon, IconName);
+  displayWheatherIcon(iconCentreX, iconCentreY, IconName, LargeIcon);
+  // if      (IconName == "01d" || IconName == "01n")  Sunny(iconCentreX,iconCentreY, LargeIcon, IconName);
+  // else if (IconName == "02d" || IconName == "02n")  MostlySunny(iconCentreX, iconCentreY, LargeIcon, IconName);
+  // else if (IconName == "03d" || IconName == "03n")  Cloudy(iconCentreX, iconCentreY, LargeIcon, IconName);
+  // else if (IconName == "04d" || IconName == "04n")  MostlyCloudy(iconCentreX, iconCentreY, LargeIcon, IconName);
+  // else if (IconName == "09d" || IconName == "09n")  ChanceRain(iconCentreX, iconCentreY, LargeIcon, IconName);
+  // else if (IconName == "10d" || IconName == "10n")  Rain(iconCentreX, iconCentreY, LargeIcon, IconName);
+  // else if (IconName == "11d" || IconName == "11n")  Tstorms(iconCentreX, iconCentreY, LargeIcon, IconName);
+  // else if (IconName == "13d" || IconName == "13n")  Snow(iconCentreX, iconCentreY, LargeIcon, IconName);
+  // else if (IconName == "50d")                       Haze(iconCentreX, iconCentreY, LargeIcon, IconName);
+  // else if (IconName == "50n")                       Fog(iconCentreX, iconCentreY, LargeIcon, IconName);
+  // else                                              Nodata(iconCentreX, iconCentreY, LargeIcon, IconName);
 
   int16_t tbx, tby; uint16_t tbw, accuw, tbh;
 

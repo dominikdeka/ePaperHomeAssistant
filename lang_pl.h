@@ -73,3 +73,6 @@ const char* weekday_D[] = { "Niedziela", "Poniedzialek", "Wtorek", "Sroda", "Czw
 //Month
 const char* month_M[] = { "Styczen", "Luty", "Marzec", "Kwiecien", "Maj", "Czerwiec", "Lipiec", "Sierpien", "Wrzesien", "Pazdziernik", "Listopad", "Grudzien" };
 
+String modes[] = { "kompaktowy", "kalendarz", "pogoda"};
+
+String phases[] = { " laczenie wifi...", " pobieranie czasu...", " pobieranie odczytow...", " pobieranie kalendarza...",  " pobieranie prognozy...", " drukowanie...", "" };

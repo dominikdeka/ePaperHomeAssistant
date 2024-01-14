@@ -6,7 +6,7 @@
 
 #include "credentials.h"
 #include "settings.h"
-#include "wheather_lang_pl.h"                  // Localisation (Polish)
+#include "lang_pl.h"                  // Localisation (Polish)
 #include "images.h"
 
 #include <GxEPD2_BW.h> // v1.5.3
@@ -52,12 +52,9 @@ MqttTopic mqttTopics[6] = {
 
 RTC_DATA_ATTR ApplicationState applicationState = {0, 0, 0, 0};
 
-String modes[] = { "kompaktowy", "kalendarz", "pogoda"};
-String phases[] = { " laczenie wifi...", " pobieranie czasu...", " pobieranie odczytow...", " pobieranie kalendarza...",  " pobieranie prognozy...", " drukowanie...", "" };
-
 #include "wheather_common.h"
-#include "wheather_drawing.h"
-#include "compact_drawing.h"
+#include "drawing_common.h"
+#include "drawing.h"
 
 WiFiClient wifiClient;
 PubSubClient mqttClient(wifiClient);

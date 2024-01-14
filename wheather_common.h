@@ -5,7 +5,6 @@
 #include <ArduinoJson.h>
 #include <HTTPClient.h>
 
-#include "wheather_forecast_record.h"
 #include "wheather_common_functions.h"
 
 //#########################################################################################
