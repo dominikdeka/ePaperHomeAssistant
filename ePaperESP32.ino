@@ -1,8 +1,9 @@
-//TODO - u8g2, struktura mqtt do poprawki, Google script do repo, refactoring, rezygnacja po x - próbach (co robić gdy się nie uda) + deep sleep (battery below some level)
+//TODO - u8g2, fix mqtt structure, Google script to repo, refactoring, status, resign after x tries (show in status) + deep sleep (battery below some level)
 #define ENABLE_GxEPD2_GFX 0
 #define TIME_TO_SLEEP 1800       /* Time ESP32 will go to sleep (in seconds, max value 1800 = 30m) */
 #define WAKEUP_SKIP 2 /* Skip every n wakups to save battery */ 
 #define MAX_ATTEMPTS 4 /* Give up after MAX_ATTEMPTS try to connect any service */ 
+#define GPIO_BIT_MASK ((1ULL << GPIO_NUM_32) | (1ULL << GPIO_NUM_35))
 
 #include "credentials.h"
 #include "settings.h"
@@ -58,8 +59,6 @@ RTC_DATA_ATTR ApplicationState applicationState = {0, 0, 0, 0};
 
 WiFiClient wifiClient;
 PubSubClient mqttClient(wifiClient);
-
-#define GPIO_BIT_MASK ((1ULL << GPIO_NUM_32) | (1ULL << GPIO_NUM_35))
 
 void setup()
 {

@@ -14,9 +14,9 @@ struct Bounds {
 #define barchart_on   true
 #define barchart_off  false
 
-float pressure_readings[max_readings]    = {0};
+// float pressure_readings[max_readings]    = {0};
 float temperature_readings[max_readings] = {0};
-float humidity_readings[max_readings]    = {0};
+// float humidity_readings[max_readings]    = {0};
 float rain_readings[max_readings]        = {0};
 float snow_readings[max_readings]        = {0};
 
@@ -214,24 +214,8 @@ void displayForecastSection(int x, int y, int width) {
 void displayConditionsSection(int x, int y, int width, String IconName) {
   int iconCentreX = x + 86; int iconCentreY =  y + 70;
   displayWheatherIcon(iconCentreX, iconCentreY, IconName, LargeIcon);
-  // if      (IconName == "01d" || IconName == "01n")  Sunny(iconCentreX,iconCentreY, LargeIcon, IconName);
-  // else if (IconName == "02d" || IconName == "02n")  MostlySunny(iconCentreX, iconCentreY, LargeIcon, IconName);
-  // else if (IconName == "03d" || IconName == "03n")  Cloudy(iconCentreX, iconCentreY, LargeIcon, IconName);
-  // else if (IconName == "04d" || IconName == "04n")  MostlyCloudy(iconCentreX, iconCentreY, LargeIcon, IconName);
-  // else if (IconName == "09d" || IconName == "09n")  ChanceRain(iconCentreX, iconCentreY, LargeIcon, IconName);
-  // else if (IconName == "10d" || IconName == "10n")  Rain(iconCentreX, iconCentreY, LargeIcon, IconName);
-  // else if (IconName == "11d" || IconName == "11n")  Tstorms(iconCentreX, iconCentreY, LargeIcon, IconName);
-  // else if (IconName == "13d" || IconName == "13n")  Snow(iconCentreX, iconCentreY, LargeIcon, IconName);
-  // else if (IconName == "50d")                       Haze(iconCentreX, iconCentreY, LargeIcon, IconName);
-  // else if (IconName == "50n")                       Fog(iconCentreX, iconCentreY, LargeIcon, IconName);
-  // else                                              Nodata(iconCentreX, iconCentreY, LargeIcon, IconName);
 
   int16_t tbx, tby; uint16_t tbw, accuw, tbh;
-
-  // display.setFont(&FreeSerifBold12pt7b);
-  // display.getTextBounds(TXT_FORECAST, 0, 0, &tbx, &tby, &tbw, &tbh);
-  // display.setCursor(x + (width - tbw) / 2, y + 5 - tby);
-  // display.print(TXT_FORECAST);
 
   iconCentreX = iconCentreX + 90;
   iconCentreY = iconCentreY - 45;
