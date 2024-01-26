@@ -28,6 +28,7 @@ void displayConditionsSection(int x, int y, int width, String IconName);
 void displayToday(int leftOffset, int topOffset, int width, int height);
 int displayWeather(int leftOffset);
 int displayCalendarData();
+int displayCalendarData2();
 struct Bounds getMaxBounds(String words[], byte size);
 
 void displayCurrentState() {
@@ -458,6 +459,81 @@ int displayCalendarData() {
   while (display.nextPage());
 
   return tbw_date_max + tbw_max + 25;
+}
+
+int displayCalendarData2() {
+  const int offset = 35;
+  const int tableWidth = 450;
+  const int maxTableHeight = display.height() - offset;
+
+  const int padding = 5;
+  display.setRotation(0);
+  display.setFont(&FreeSerif12pt7b);
+
+  byte daysNumber = calEvents.size();
+  typedef struct {
+      Bounds start;
+      std::vector<Bounds> events;
+  } calDateBounds;
+  std::vector<calDateBounds> calEventBounds;
+
+
+  uint16_t date_max_width;
+  // uint16_t tbw_max, tbh_max;
+  // display.getTextBounds(calEvents[0].start, 0, 0, &tbx_date, &tby_date, &tbw_date, &tbh_date);
+  // byte eventCounter = 0;
+  u8g2Fonts.setFont(u8g2_font_helvR14_tf);  // select u8g2 font from here: https://github.com/olikraus/u8g2/wiki/fntlistall
+  for(byte i = 0; i < daysNumber; i++) {
+    int16_t tw = u8g2Fonts.getUTF8Width(calEvents[i].start.c_str()); // text box width
+
+    // int16_t tbx, tby; uint16_t tbw, tbh;
+    // display.getTextBounds(calEvents[i].start, 0, 0, &tbx, &tby, &tbw, &tbh);
+
+    if (tw > date_max_width) {
+      date_max_width = tw;
+    }
+  }
+  //   calDateBounds bounds;
+  //   bounds.start = {tbx, tby, tbw, tbh};
+
+  //   byte eventsNumber = calEvents[i].events.size();
+  //   for(byte j = 0; j < eventsNumber; j++) {
+  //     display.getTextBounds(calEvents[i].events[j], 0, 0, &tbx, &tby, &tbw, &tbh);
+
+  //     if (tbw > tbw_max) {
+  //       tbw_max = tbw;
+  //     }
+  //     if (tbh > tbh_max) {
+  //       tbh_max = tbh;
+  //     }
+  //     bounds.events.push_back({tbx, tby, tbw, tbh});
+
+  //     eventCounter ++;
+  //   }
+  //   calEventBounds.push_back(bounds);
+  // }
+
+
+  display.setPartialWindow(0, offset, tableWidth, display.width());
+  display.firstPage();
+  do
+  {
+
+    // display.setTextColor(GxEPD_WHITE);
+    // display.fillScreen(GxEPD_WHITE);
+    // display.fillRect(0, offset, tbw_date_max + 10, tbh_date_max * eventCounter + padding * 2, GxEPD_BLACK);    
+    // byte eventCounter = 0;
+    int currentHeight = offset;
+    for(byte i = 0; i < daysNumber; i++) {
+      currentHeight = drawEventsDay(currentHeight, maxTableHeight, calEvents[i].start, date_max_width, calEvents[i].events, tableWidth - date_max_width);
+      if (currentHeight == 0) {
+        break;
+      }
+    }
+  }
+  while (display.nextPage());
+
+  return tableWidth;
 }
 
 struct Bounds getMaxBounds(String words[], byte size) {

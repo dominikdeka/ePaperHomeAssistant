@@ -25,6 +25,7 @@ void Visibility(int x, int y, String Visi);
 void Nodata(int x, int y, bool IconSize, String IconName);
 void drawString(int x, int y, String text, alignment align);
 void drawStringMaxWidth(int x, int y, unsigned int text_width, String text, alignment align);
+int drawEventsDay(String date, int col1W, std::vector<String> events, int col2W);
 
 boolean LargeIcon = true, SmallIcon = false;
 #define Large  17           // For icon drawing, needs to be odd number for best effect
@@ -343,4 +344,32 @@ void drawStringMaxWidth(int x, int y, unsigned int text_width, String text, alig
     secondLine.trim(); // Remove any leading spaces
     display.println(secondLine);
   }
+}
+
+int drawEventsDay(int currentHeight, int maxTableHeight, String date, int col1W, std::vector<String> events, int col2W) {
+    u8g2Fonts.setFont(u8g2_font_helvR18_tf);
+    int16_t ta = u8g2Fonts.getFontAscent(); // positive
+    int16_t td = u8g2Fonts.getFontDescent(); // negative; in mathematicians view
+    int16_t lineHeight = ta - td; // text box height
+
+    byte eventsNumber = events.size();
+    int16_t newHeight = currentHeight + eventsNumber * lineHeight;
+    if (newHeight > maxTableHeight) {
+      return 0;
+    }
+    for(byte j = 0; j < eventsNumber; j++) {
+
+      u8g2Fonts.setCursor(col1W, currentHeight + (j + 1) * lineHeight);
+      u8g2Fonts.print(events[j]);
+    }
+
+
+    u8g2Fonts.setFont(u8g2_font_helvR14_tf);
+    ta = u8g2Fonts.getFontAscent(); // positive
+    td = u8g2Fonts.getFontDescent(); // negative; in mathematicians view
+    lineHeight = ta - td; // text box height
+    u8g2Fonts.setCursor(0, currentHeight + lineHeight);
+    u8g2Fonts.print(date);
+
+    return newHeight;
 }
