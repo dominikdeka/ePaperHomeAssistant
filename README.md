@@ -1,5 +1,7 @@
 # ePaperDisplay
 
+* create script in https://script.google.com/, use content from `scripts/appsScript.gs`, deploy it with access for everyone, replace below GOOGLE_SCRIPT_ID with deployment key value
+
 * create `credentials.h` file that contains:
 
 ```
@@ -17,3 +19,4 @@ const char* mqttClientId = "ePaperDisplay-1";
 // Use your own API key by signing up for a free developer account at https://openweathermap.org/
 String apikey       = "************";                      // See: https://openweathermap.org/  // It's free to get an API key, but don't take more than 60 readings/minute!
 const char server[] = "api.openweathermap.org";
+```
