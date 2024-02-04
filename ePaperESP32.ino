@@ -1,4 +1,4 @@
-//TODO - u8g2, fix mqtt structure, Google script to repo, refactoring, status, resign after x tries (show in status) + deep sleep (battery below some level)
+//TODO - u8g2, fix mqtt structure, Google script to repo, refactoring..., status, resign after x tries (show in status) + deep sleep (battery below some level)
 #define ENABLE_GxEPD2_GFX 0
 #define TIME_TO_SLEEP 1800       /* Time ESP32 will go to sleep (in seconds, max value 1800 = 30m) */
 #define WAKEUP_SKIP 2 /* Skip every n wakups to save battery */ 
@@ -67,49 +67,38 @@ void setup()
 
   setStateOnWakeup();
   delay(500);
-  // *** special handling for Waveshare ESP32 Driver board *** //
-  // ********************************************************* //
-  hspi.begin(13, 12, 14, 15); // remap hspi for EPD (swap pins)
-  display.epd2.selectSPI(hspi, SPISettings(4000000, MSBFIRST, SPI_MODE0));
-  // *** end of special handling for Waveshare ESP32 Driver board *** //
-  // **************************************************************** //
-
-  display.init(false);
-  u8g2Fonts.begin(display); // connect u8g2 procedures to Adafruit GFX
-  u8g2Fonts.setForegroundColor(GxEPD_BLACK);         // apply Adafruit GFX color
-  u8g2Fonts.setBackgroundColor(GxEPD_WHITE);         // apply Adafruit GFX color
-
-  delay(2000);
 
   //setup mqtt
   mqttClient.setServer(mqtt_server, mqtt_server_port);
   mqttClient.setCallback(mqttCallback);
 
-  // init application state
-  setApplicationPhase(0);
+  if (connectWiFi() == true) {
+    setApplicationPhase(0);
+  } else {
+    phases[6] = "WiFi connection failed";
+    setApplicationPhase(6);
+  }
 }
 
 void loop()
 {
-  if (applicationState.currentPhase == 0) { // connecting wifi
-    displayCurrentState();
-    if (connectWiFi() == true) {
-      nextPhase();
-    } else {
-      phases[6] = "WiFi connection failed";
-      setApplicationPhase(6);
-      displayCurrentState();
+  if (applicationState.currentPhase == 0) { // initialize ePaper
+    // *** special handling for Waveshare ESP32 Driver board *** //
+    // ********************************************************* //
+    hspi.begin(13, 12, 14, 15); // remap hspi for EPD (swap pins)
+    display.epd2.selectSPI(hspi, SPISettings(4000000, MSBFIRST, SPI_MODE0));
+    // *** end of special handling for Waveshare ESP32 Driver board *** //
+    // **************************************************************** //
 
-    }
+    display.init(false);
+    u8g2Fonts.begin(display); // connect u8g2 procedures to Adafruit GFX
+    u8g2Fonts.setForegroundColor(GxEPD_BLACK);         // apply Adafruit GFX color
+    u8g2Fonts.setBackgroundColor(GxEPD_WHITE);         // apply Adafruit GFX color
+    nextPhase();
   }
   if (applicationState.currentPhase == 1) { // reading time
-    if (readDateTime() == true) {
-      nextPhase();
-    } else {
-      phases[6] = "Failed to obtain time";
-      setApplicationPhase(6);
-      displayCurrentState();
-    }
+    readDateTime();
+    nextPhase();
   }
   if (applicationState.currentPhase == 2) { // collecting mqtt data
     byte Attempts = 1;
