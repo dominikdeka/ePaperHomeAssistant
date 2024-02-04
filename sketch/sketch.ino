@@ -1,4 +1,4 @@
-//TODO - u8g2, fix mqtt structure, Google script to repo, refactoring..., status, resign after x tries (show in status) + deep sleep (battery below some level)
+//TODO - u8g2, fix mqtt structure, refactoring..., status, resign after x tries (show in status) + deep sleep (battery below some level)
 #define ENABLE_GxEPD2_GFX 0
 #define TIME_TO_SLEEP 1800       /* Time ESP32 will go to sleep (in seconds, max value 1800 = 30m) */
 #define WAKEUP_SKIP 2 /* Skip every n wakups to save battery */ 
