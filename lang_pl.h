@@ -28,8 +28,8 @@ const String TXT_PRECIPITATION_SOON = "Opad.";
 
 
 //Sun
-const String TXT_SUNRISE  = "Wschod";
-const String TXT_SUNSET   = "Zachod";
+const String TXT_SUNRISE  = "Wsch.";
+const String TXT_SUNSET   = "Zach.";
 
 //Moon
 const String TXT_MOON_NEW             = "Now";

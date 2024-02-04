@@ -78,7 +78,6 @@ void setup()
   u8g2Fonts.begin(display); // connect u8g2 procedures to Adafruit GFX
   u8g2Fonts.setForegroundColor(GxEPD_BLACK);         // apply Adafruit GFX color
   u8g2Fonts.setBackgroundColor(GxEPD_WHITE);         // apply Adafruit GFX color
-  u8g2Fonts.setFont(u8g2_font_helvB12_tf);
 
   delay(2000);
 
@@ -145,7 +144,7 @@ void loop()
   if (applicationState.currentPhase == 5) { // draw data on screen
     int leftOffset = 0;    
     if (applicationState.viewMode == 0 || applicationState.viewMode == 1) {
-      leftOffset = displayCalendarData();
+      leftOffset = displayCalendarData2();
     }
     if (applicationState.viewMode == 0 || applicationState.viewMode == 2) {
       int topOffset = displayWeather(leftOffset);

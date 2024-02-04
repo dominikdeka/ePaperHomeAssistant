@@ -26,6 +26,7 @@ void Nodata(int x, int y, bool IconSize, String IconName);
 void drawString(int x, int y, String text, alignment align);
 void drawStringMaxWidth(int x, int y, unsigned int text_width, String text, alignment align);
 int drawEventsDay(String date, int col1W, std::vector<String> events, int col2W);
+int wrapText(const char* text, int x, int y, int maxWidth);
 
 boolean LargeIcon = true, SmallIcon = false;
 #define Large  17           // For icon drawing, needs to be odd number for best effect
@@ -347,29 +348,60 @@ void drawStringMaxWidth(int x, int y, unsigned int text_width, String text, alig
 }
 
 int drawEventsDay(int currentHeight, int maxTableHeight, String date, int col1W, std::vector<String> events, int col2W) {
-    u8g2Fonts.setFont(u8g2_font_helvR18_tf);
+    u8g2Fonts.setFont(u8g2_font_helvB14_te);
     int16_t ta = u8g2Fonts.getFontAscent(); // positive
     int16_t td = u8g2Fonts.getFontDescent(); // negative; in mathematicians view
-    int16_t lineHeight = ta - td; // text box height
-
-    byte eventsNumber = events.size();
-    int16_t newHeight = currentHeight + eventsNumber * lineHeight;
-    if (newHeight > maxTableHeight) {
-      return 0;
-    }
-    for(byte j = 0; j < eventsNumber; j++) {
-
-      u8g2Fonts.setCursor(col1W, currentHeight + (j + 1) * lineHeight);
-      u8g2Fonts.print(events[j]);
-    }
-
-
-    u8g2Fonts.setFont(u8g2_font_helvR14_tf);
-    ta = u8g2Fonts.getFontAscent(); // positive
-    td = u8g2Fonts.getFontDescent(); // negative; in mathematicians view
-    lineHeight = ta - td; // text box height
-    u8g2Fonts.setCursor(0, currentHeight + lineHeight);
+    int dateHeight = ta - td; // text box height
+    u8g2Fonts.setCursor(0, currentHeight + dateHeight);
     u8g2Fonts.print(date);
 
-    return newHeight;
+    u8g2Fonts.setFont(u8g2_font_luRS18_tf);
+    byte eventsNumber = events.size();
+    // int16_t newHeight = currentHeight + eventsNumber * lineHeight;
+    // if (newHeight > maxTableHeight) {
+    //   return 0;
+    // }
+    ta = u8g2Fonts.getFontAscent(); // positive
+    td = u8g2Fonts.getFontDescent(); // negative; in mathematicians view
+    int16_t lineHeight = ta - td; // text box height
+
+    int eventsHeight = 0;
+    for(byte j = 0; j < eventsNumber; j++) {
+
+      // u8g2Fonts.setCursor(col1W, currentHeight + (lines + 1) * lineHeight);
+      eventsHeight += wrapText(events[j].c_str(), col1W + 5, currentHeight + eventsHeight, col2W - 40);//ugly hack
+      if (currentHeight + eventsHeight + lineHeight > maxTableHeight) {
+        return 0;
+      }
+    }
+    return currentHeight + eventsHeight;
+}
+int wrapText(const char* text, int x, int y, int maxWidth) {
+  int16_t ta = u8g2Fonts.getFontAscent(); // positive
+  int16_t td = u8g2Fonts.getFontDescent(); // negative; in mathematicians view
+  int16_t lineHeight = ta - td; // text box height
+
+  uint8_t length = strlen(text);
+  char buffer[length + 1];
+  strcpy(buffer, text);
+
+  char* token = strtok(buffer, " ");
+  int16_t currentWidth = 0;
+  int lines = 1;
+  u8g2Fonts.setCursor(x, y + lines * lineHeight);
+  while (token != NULL) {
+    int16_t tokenWidth = u8g2Fonts.getUTF8Width(token);
+    // Serial.println(token);
+    // Serial.println(tokenWidth);
+    if (currentWidth + tokenWidth > maxWidth) {
+      currentWidth = 0;
+      lines++;
+      u8g2Fonts.setCursor(x, y + lines * lineHeight);
+    }
+    u8g2Fonts.print(token);
+    u8g2Fonts.print(" ");
+    currentWidth += tokenWidth + u8g2Fonts.getUTF8Width(" ");
+    token = strtok(NULL, " ");
+  }
+  return lines * lineHeight;
 }
