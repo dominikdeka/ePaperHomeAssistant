@@ -141,14 +141,14 @@ void drawGraph(int x_pos, int y_pos, int gwidth, int gheight, float Y1Min, float
       if (spacing < y_minor_axis) display.drawFastHLine((x_pos + 3 + j * gwidth / number_of_dashes), y_pos + (gheight * spacing / y_minor_axis), gwidth / (2 * number_of_dashes), GxEPD_BLACK);
     }
     if ((Y1Max - (float)(Y1Max - Y1Min) / y_minor_axis * spacing) < 5 || title == TXT_PRESSURE_IN) {
-      drawString(x_pos - 1, y_pos + gheight * spacing / y_minor_axis - 5, String((Y1Max - (float)(Y1Max - Y1Min) / y_minor_axis * spacing + 0.01), 1), RIGHT);
+      drawString(x_pos - 4, y_pos + gheight * spacing / y_minor_axis + 5, String((Y1Max - (float)(Y1Max - Y1Min) / y_minor_axis * spacing + 0.01), 1), RIGHT);
     }
     else
     {
       if (Y1Min < 1 && Y1Max < 10)
-        drawString(x_pos - 1, y_pos + gheight * spacing / y_minor_axis - 5, String((Y1Max - (float)(Y1Max - Y1Min) / y_minor_axis * spacing + 0.01), 1), RIGHT);
+        drawString(x_pos - 4, y_pos + gheight * spacing / y_minor_axis + 7, String((Y1Max - (float)(Y1Max - Y1Min) / y_minor_axis * spacing + 0.01), 1), RIGHT);
       else
-        drawString(x_pos - 2, y_pos + gheight * spacing / y_minor_axis - 5, String((Y1Max - (float)(Y1Max - Y1Min) / y_minor_axis * spacing + 0.01), 0), RIGHT);
+        drawString(x_pos - 4, y_pos + gheight * spacing / y_minor_axis + 7, String((Y1Max - (float)(Y1Max - Y1Min) / y_minor_axis * spacing + 0.01), 0), RIGHT);
     }
   }
 
@@ -158,7 +158,7 @@ void drawGraph(int x_pos, int y_pos, int gwidth, int gheight, float Y1Min, float
     if(String(WxForecast[gx].Period.substring(0,10)) != lastDate) {
       lastDate = String(WxForecast[gx].Period.substring(0,10));
       x2 = x_pos + gx * (gwidth / readings) + 2;
-      drawString(x2, y_pos + gheight + 3, "|", LEFT);
+      drawString(x2, y_pos + gheight + 13, "|", LEFT);
     }
   }
   // for (int i = 0; i <= 2; i++) {
@@ -173,8 +173,8 @@ void displayForecastWeather(int x, int y, int index, int width) {
   display.drawRect(x, y, fwidth - 1, 81, GxEPD_BLACK);
   display.drawLine(x, y + 17, x + fwidth - 3, y + 17, GxEPD_BLACK);
   displayWheatherIcon(x + fwidth / 2, y + 43, WxForecast[index].Icon, SmallIcon);
-  drawString(x + fwidth / 2, y + 1, String(ConvertUnixTime(WxForecast[index].Dt + WxConditions[0].Timezone).substring(0,5)), CENTER);
-  drawString(x + fwidth / 2 + 12, y + 65, String(WxForecast[index].High, 0) + "*/" + String(WxForecast[index].Low, 0) + "*", CENTER);
+  drawString(x + fwidth / 2, y + 14, String(ConvertUnixTime(WxForecast[index].Dt + WxConditions[0].Timezone).substring(0,5)), CENTER);
+  drawString(x + fwidth / 2, y + 79, String(WxForecast[index].High, 0) + "°/" + String(WxForecast[index].Low, 0) + "°", CENTER);
 }
 
 void displayForecastSection(int x, int y, int width) {

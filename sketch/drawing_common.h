@@ -316,14 +316,18 @@ void Nodata(int x, int y, bool IconSize, String IconName) {
 }
 //#########################################################################################
 void drawString(int x, int y, String text, alignment align) {
+  u8g2Fonts.setFont(u8g2_font_helvB12_tf);
   int16_t  x1, y1; //the bounds of x,y and w and h of the variable 'text' in pixels.
   uint16_t w, h;
   display.setTextWrap(false);
   display.getTextBounds(text, x, y, &x1, &y1, &w, &h);
+
   if (align == RIGHT)  x = x - w;
   if (align == CENTER) x = x - w / 2;
-  display.setCursor(x, y + h);
-  display.print(text);
+  u8g2Fonts.setCursor(x, y);
+  u8g2Fonts.print(text);
+  // display.setCursor(x, y + h);
+  // display.print(text);
 }
 //#########################################################################################
 void drawStringMaxWidth(int x, int y, unsigned int text_width, String text, alignment align) {
