@@ -226,34 +226,38 @@ void displayConditionsSection(int x, int y, int width, String IconName) {
   addcloud(iconCentreX, iconCentreY, Small * 0.5, 2); // Main cloud
   display.setFont(&FreeSerif9pt7b);
   String cloudCover = String(WxConditions[0].Cloudcover) + "%";
-  display.getTextBounds(cloudCover, 0, 0, &tbx, &tby, &tbw, &tbh);
-  display.setCursor(iconCentreX + 20, iconCentreY - 10 - tby);
-  display.print(cloudCover);
-  accuw = tbw;
-
   String humidity = TXT_HUMIDITY + ": " + String(WxConditions[0].Humidity, 0) + "%";
-  display.getTextBounds(humidity, 0, 0, &tbx, &tby, &tbw, &tbh);
-  display.setCursor(iconCentreX + 24 + accuw + 5, iconCentreY - 10 - tby);
-  display.print(humidity);
+  // display.getTextBounds(cloudCover, 0, 0, &tbx, &tby, &tbw, &tbh);
+  // display.setCursor(iconCentreX + 20, iconCentreY - 10 - tby);
+  // display.print(cloudCover);
+  accuw = tbw;
+  tbh = 22;
+  drawString(iconCentreX + 20 + 5, iconCentreY, cloudCover + "  " + humidity, LEFT);
+  // display.getTextBounds(humidity, 0, 0, &tbx, &tby, &tbw, &tbh);
+  // display.setCursor(iconCentreX + 24 + accuw + 5, iconCentreY - 10 - tby);
+  // display.print(humidity);
 
-  String temperature = TXT_TEMPERATURES + ": " + String(WxConditions[0].Temperature, 1) + "*C (" + String(WxConditions[0].High, 0) + "*|" + String(WxConditions[0].Low, 0) + "*)";
-  display.getTextBounds(temperature, 0, 0, &tbx, &tby, &tbw, &tbh);
-  display.setCursor(iconCentreX - 20, iconCentreY - 5 - tby + tbh);
-  display.print(temperature);
+  String temperature = TXT_TEMPERATURES + ": " + String(WxConditions[0].Temperature, 1) + "°C (" + String(WxConditions[0].High, 0) + "°|" + String(WxConditions[0].Low, 0) + "°)";
+  drawString(iconCentreX - 20, iconCentreY + tbh, temperature, LEFT);
+  // display.getTextBounds(temperature, 0, 0, &tbx, &tby, &tbw, &tbh);
+  // display.setCursor(iconCentreX - 20, iconCentreY - 5 - tby + tbh);
+  // display.print(temperature);
 
   String slope_direction = TXT_PRESSURE_STEADY;
   if (WxConditions[0].Trend == "+") slope_direction = TXT_PRESSURE_RISING;
   if (WxConditions[0].Trend == "-") slope_direction = TXT_PRESSURE_FALLING;
 
   String preasure = TXT_PRESSURE + ": " + String(WxConditions[0].Pressure, 0) + "hPa (" + slope_direction + ")";
-  display.getTextBounds(preasure, 0, 0, &tbx, &tby, &tbw, &tbh);
-  display.setCursor(iconCentreX - 20, iconCentreY - tby + 2 * tbh);
-  display.print(preasure);
+  drawString(iconCentreX - 20, iconCentreY + 2 * tbh, preasure, LEFT);
+  // display.getTextBounds(preasure, 0, 0, &tbx, &tby, &tbw, &tbh);
+  // display.setCursor(iconCentreX - 20, iconCentreY - tby + 2 * tbh);
+  // display.print(preasure);
 
   String sunrise = TXT_SUNRISE + ": " + ConvertUnixTime(WxConditions[0].Sunrise + WxConditions[0].Timezone).substring(0, 5) + " " + TXT_SUNSET + ": " + ConvertUnixTime(WxConditions[0].Sunset + WxConditions[0].Timezone).substring(0, 5);
-  display.getTextBounds(sunrise, 0, 0, &tbx, &tby, &tbw, &tbh);
-  display.setCursor(iconCentreX - 20, iconCentreY + 15 - tby + 3 * tbh);
-  display.print(sunrise);
+  drawString(iconCentreX - 20, iconCentreY + 3 * tbh, sunrise, LEFT);
+  // display.getTextBounds(sunrise, 0, 0, &tbx, &tby, &tbw, &tbh);
+  // display.setCursor(iconCentreX - 20, iconCentreY + 15 - tby + 3 * tbh);
+  // display.print(sunrise);
 }
 
 void displayToday(int leftOffset, int topOffset, int width, int height) {
@@ -293,7 +297,7 @@ int displayWeather(int leftOffset) {
   struct Bounds labelsBounds[topicsNumber + otherNumber];
   for(byte i = 0; i < topicsNumber + otherNumber; i++) {
     labels[i] = mqttTopics[i].label + ": ";
-    values[i] = mqttTopics[i].tempValue + "*C/" + mqttTopics[i].humValue + "%";
+    values[i] = mqttTopics[i].tempValue + "°C/" + mqttTopics[i].humValue + "%";
   }
 
   // labels[topicsNumber + 2] = "cisnienie:";

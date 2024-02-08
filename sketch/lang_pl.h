@@ -6,8 +6,8 @@ const String TXT_FORECAST  = "Prognoza";
 const String TXT_CONDITIONS       = "Warunki";
 const String TXT_DAYS             = "(dni)";
 const String TXT_TEMPERATURES     = "Temperatura";
-const String TXT_TEMPERATURE_C    = "Temperatura (*C)";
-const String TXT_TEMPERATURE_F    = "Temperatura (*F)";
+const String TXT_TEMPERATURE_C    = "Temperatura (°C)";
+const String TXT_TEMPERATURE_F    = "Temperatura (°F)";
 const String TXT_HUMIDITY_PERCENT = "Wilgotnosc (%)";
 const String TXT_HUMIDITY = "Wilgotnosc";
 
