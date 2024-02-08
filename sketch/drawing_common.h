@@ -23,14 +23,14 @@ void Haze(int x, int y, bool IconSize, String IconName);
 void CloudCover(int x, int y, int CCover);
 void Visibility(int x, int y, String Visi);
 void Nodata(int x, int y, bool IconSize, String IconName);
-void drawString(int x, int y, String text, alignment align);
-void drawStringMaxWidth(int x, int y, unsigned int text_width, String text, alignment align);
+void drawString(int x, int y, String text, alignment align, const uint8_t *fontName = u8g2_font_helvB12_tf);
 int drawEventsDay(String date, int col1W, std::vector<String> events, int col2W);
 int wrapText(const char* text, int x, int y, int maxWidth);
 
 boolean LargeIcon = true, SmallIcon = false;
 #define Large  17           // For icon drawing, needs to be odd number for best effect
 #define Small  6            // For icon drawing, needs to be odd number for best effect
+
 //#########################################################################################
 // Symbols are drawn on a relative 10x10grid and 1 scale unit = 1 drawing unit
 //#########################################################################################
@@ -315,40 +315,21 @@ void Nodata(int x, int y, bool IconSize, String IconName) {
   display.setFont(&FreeSerif9pt7b);
 }
 //#########################################################################################
-void drawString(int x, int y, String text, alignment align) {
-  u8g2Fonts.setFont(u8g2_font_helvB12_tf);
-  int16_t  x1, y1; //the bounds of x,y and w and h of the variable 'text' in pixels.
-  uint16_t w, h;
-  display.setTextWrap(false);
-  display.getTextBounds(text, x, y, &x1, &y1, &w, &h);
-
+void drawString(int x, int y, String text, alignment align, const uint8_t *fontName) {
+  u8g2Fonts.setFont(fontName);
+  // int16_t  x1, y1; //the bounds of x,y and w and h of the variable 'text' in pixels.
+  // uint16_t w;
+  uint16_t w = u8g2Fonts.getUTF8Width(text.c_str());
+  // display.setTextWrap(false);
+  // display.getTextBounds(text, x, y, &x1, &y1, &w, &h);
+  Serial.print(text + " width: ");
+  Serial.println(w);
   if (align == RIGHT)  x = x - w;
   if (align == CENTER) x = x - w / 2;
   u8g2Fonts.setCursor(x, y);
   u8g2Fonts.print(text);
   // display.setCursor(x, y + h);
   // display.print(text);
-}
-//#########################################################################################
-void drawStringMaxWidth(int x, int y, unsigned int text_width, String text, alignment align) {
-  int16_t  x1, y1; //the bounds of x,y and w and h of the variable 'text' in pixels.
-  uint16_t w, h;
-  display.getTextBounds(text, x, y, &x1, &y1, &w, &h);
-  if (align == RIGHT)  x = x - w;
-  if (align == CENTER) x = x - w / 2;
-  display.setCursor(x, y);
-  if (text.length() > text_width * 2) {
-    display.setFont(&FreeSerif9pt7b);
-    text_width = 42;
-    y = y - 3;
-  }
-  display.println(text.substring(0, text_width));
-  if (text.length() > text_width) {
-    display.setCursor(x, y + h + 15);
-    String secondLine = text.substring(text_width);
-    secondLine.trim(); // Remove any leading spaces
-    display.println(secondLine);
-  }
 }
 
 int drawEventsDay(int currentHeight, int maxTableHeight, String date, int col1W, std::vector<String> events, int col2W) {

@@ -27,7 +27,7 @@ void displayForecastSection(int x, int y);
 void displayConditionsSection(int x, int y, int width, String IconName);
 void displayToday(int leftOffset, int topOffset, int width, int height);
 int displayWeather(int leftOffset);
-int displayCalendarData();
+// int displayCalendarData();
 int displayCalendarData2();
 struct Bounds getMaxBounds(String words[], byte size);
 
@@ -113,11 +113,11 @@ void drawGraph(int x_pos, int y_pos, int gwidth, int gheight, float Y1Min, float
   last_x = x_pos;
   last_y = y_pos + (Y1Max - constrain(DataArray[1], Y1Min, Y1Max)) / (Y1Max - Y1Min) * gheight;
   display.drawRect(x_pos, y_pos, gwidth + 3, gheight + 2, GxEPD_BLACK);
-
-  int16_t tbx, tby; uint16_t tbw, accuw, tbh;
-  display.getTextBounds(title, 0, 0, &tbx, &tby, &tbw, &tbh);
-  display.setCursor(x_pos + (gwidth-tbw) / 2, y_pos - 15 - tby);
-  display.print(title);
+  drawString(x_pos + gwidth / 2, y_pos - 2, title, CENTER);
+  // int16_t tbx, tby; uint16_t tbw, accuw, tbh;
+  // display.getTextBounds(title, 0, 0, &tbx, &tby, &tbw, &tbh);
+  // display.setCursor(x_pos + (gwidth-tbw) / 2, y_pos - 15 - tby);
+  // display.print(title);
 
   // Draw the data
   for (int gx = 0; gx < readings; gx++) {
@@ -265,20 +265,24 @@ void displayToday(int leftOffset, int topOffset, int width, int height) {
 
   display.setTextColor(GxEPD_BLACK);
   int16_t tbx, tby; uint16_t tbw, tbh;
-  display.setFont(&FreeSerif9pt7b);
-  display.getTextBounds(dateTime.month, 0, 0, &tbx, &tby, &tbw, &tbh);
-  display.setCursor(leftOffset + (width - tbw) / 2, topOffset + 5 - tby);
-  display.print(dateTime.month);
+  
+  drawString(leftOffset + width / 2, topOffset + 17, dateTime.month, CENTER);
+  drawString(leftOffset + width / 2, topOffset + height - 5, dateTime.weekDay, CENTER);
+  drawString(leftOffset + width / 2, topOffset + height / 2 + 21, dateTime.date, CENTER, u8g2_font_fub42_tf);
+  // display.setFont(&FreeSerif9pt7b);
+  // display.getTextBounds(dateTime.month, 0, 0, &tbx, &tby, &tbw, &tbh);
+  // display.setCursor(leftOffset + (width - tbw) / 2, topOffset + 5 - tby);
+  // display.print(dateTime.month);
 
-  display.setFont(&FreeSerifBold24pt7b);
-  display.getTextBounds(dateTime.date, 0, 0, &tbx, &tby, &tbw, &tbh);
-  display.setCursor(leftOffset + (width - tbw) / 2, topOffset + (height - tbh) / 2 - tby);
-  display.print(dateTime.date);
+  // display.setFont(&FreeSerifBold24pt7b);
+  // display.getTextBounds(dateTime.date, 0, 0, &tbx, &tby, &tbw, &tbh);
+  // display.setCursor(leftOffset + (width - tbw) / 2, topOffset + (height - tbh) / 2 - tby);
+  // display.print(dateTime.date);
 
-  display.setFont(&FreeSerif9pt7b);
-  display.getTextBounds(dateTime.weekDay, 0, 0, &tbx, &tby, &tbw, &tbh);
-  display.setCursor(leftOffset + (width - tbw) / 2, topOffset + height - tbh - tby - 5);
-  display.print(dateTime.weekDay);
+  // display.setFont(&FreeSerif9pt7b);
+  // display.getTextBounds(dateTime.weekDay, 0, 0, &tbx, &tby, &tbw, &tbh);
+  // display.setCursor(leftOffset + (width - tbw) / 2, topOffset + height - tbh - tby - 5);
+  // display.print(dateTime.weekDay);
 }
 
 int displayWeather(int leftOffset) {
@@ -321,9 +325,6 @@ int displayWeather(int leftOffset) {
   Bounds maxLabelsBounds = getMaxBounds(labels, topicsNumber + otherNumber);
   int tableWidth = 200; //maxValuesBounds.tbw + maxLabelsBounds.tbw + 10 + (2 * padding);
   int tableHeight = 140; //maxLabelsBounds.tbh * (topicsNumber + otherNumber) + (2 * padding);
-  Serial.println(String(tableHeight));
-  Serial.println(String(maxValuesBounds.tbw));
-  Serial.println(String(maxLabelsBounds.tbw));
   int tableLeftOffset = display.width() - tableWidth;
   int todayWitdth = display.width() - tableWidth - leftOffset - 5;
   display.setPartialWindow(leftOffset, topOffset, display.width() - leftOffset, display.height()- topOffset);
@@ -371,99 +372,99 @@ int displayWeather(int leftOffset) {
   return topOffset + maxLabelsBounds.tbh * 6 + 10;
 }
 
-int displayCalendarData() {
-  const int offset = 35;
-  const int padding = 5;
-  display.setRotation(0);
-  display.setFont(&FreeSerif12pt7b);
+// int displayCalendarData() {
+//   const int offset = 35;
+//   const int padding = 5;
+//   display.setRotation(0);
+//   display.setFont(&FreeSerif12pt7b);
 
-  byte daysNumber = calEvents.size();
-  typedef struct {
-      Bounds start;
-      std::vector<Bounds> events;
-  } calDateBounds;
-  std::vector<calDateBounds> calEventBounds;
-
-
-  uint16_t tbw_date_max, tbh_date_max;
-  uint16_t tbw_max, tbh_max;
-  // display.getTextBounds(calEvents[0].start, 0, 0, &tbx_date, &tby_date, &tbw_date, &tbh_date);
-  byte eventCounter = 0;
-  for(byte i = 0; i < daysNumber; i++) {
-    int16_t tbx, tby; uint16_t tbw, tbh;
-    display.getTextBounds(calEvents[i].start, 0, 0, &tbx, &tby, &tbw, &tbh);
-    if (tbw > tbw_date_max) {
-      tbw_date_max = tbw;
-    }
-    if (tbh > tbh_date_max) {
-      tbh_date_max = tbh;
-    }
-
-    calDateBounds bounds;
-    bounds.start = {tbx, tby, tbw, tbh};
-
-    byte eventsNumber = calEvents[i].events.size();
-    for(byte j = 0; j < eventsNumber; j++) {
-      display.getTextBounds(calEvents[i].events[j], 0, 0, &tbx, &tby, &tbw, &tbh);
-
-      if (tbw > tbw_max) {
-        tbw_max = tbw;
-      }
-      if (tbh > tbh_max) {
-        tbh_max = tbh;
-      }
-      bounds.events.push_back({tbx, tby, tbw, tbh});
-
-      eventCounter ++;
-    }
-    calEventBounds.push_back(bounds);
-  }
+//   byte daysNumber = calEvents.size();
+//   typedef struct {
+//       Bounds start;
+//       std::vector<Bounds> events;
+//   } calDateBounds;
+//   std::vector<calDateBounds> calEventBounds;
 
 
-  display.setPartialWindow(0, offset, tbw_date_max + tbw_max + 10, tbh_max * eventCounter + padding * 2);
-  display.firstPage();
-  do
-  {
-    display.setTextColor(GxEPD_WHITE);
-    display.fillScreen(GxEPD_WHITE);
-    display.fillRect(0, offset, tbw_date_max + 10, tbh_date_max * eventCounter + padding * 2, GxEPD_BLACK);    
-    byte eventCounter = 0;
-    for(byte i = 0; i < daysNumber; i++) {
+//   uint16_t tbw_date_max, tbh_date_max;
+//   uint16_t tbw_max, tbh_max;
+//   // display.getTextBounds(calEvents[0].start, 0, 0, &tbx_date, &tby_date, &tbw_date, &tbh_date);
+//   byte eventCounter = 0;
+//   for(byte i = 0; i < daysNumber; i++) {
+//     int16_t tbx, tby; uint16_t tbw, tbh;
+//     display.getTextBounds(calEvents[i].start, 0, 0, &tbx, &tby, &tbw, &tbh);
+//     if (tbw > tbw_date_max) {
+//       tbw_date_max = tbw;
+//     }
+//     if (tbh > tbh_date_max) {
+//       tbh_date_max = tbh;
+//     }
 
-      uint16_t x = 5 - calEventBounds[i].start.tbx;
-      uint16_t y = offset + padding + (eventCounter * tbh_max) - calEventBounds[i].events[0].tby;
+//     calDateBounds bounds;
+//     bounds.start = {tbx, tby, tbw, tbh};
 
-      display.setCursor(x, y);
-      display.print(calEvents[i].start);
-      byte eventsNumber = calEvents[i].events.size();
-      eventCounter += eventsNumber;
-    }
-  // }
-  // while (display.nextPage());
+//     byte eventsNumber = calEvents[i].events.size();
+//     for(byte j = 0; j < eventsNumber; j++) {
+//       display.getTextBounds(calEvents[i].events[j], 0, 0, &tbx, &tby, &tbw, &tbh);
+
+//       if (tbw > tbw_max) {
+//         tbw_max = tbw;
+//       }
+//       if (tbh > tbh_max) {
+//         tbh_max = tbh;
+//       }
+//       bounds.events.push_back({tbx, tby, tbw, tbh});
+
+//       eventCounter ++;
+//     }
+//     calEventBounds.push_back(bounds);
+//   }
 
 
-  // // display.setPartialWindow(tbw_date + 15, offset, tbw_max + 15, tbh_max * eventCounter + padding * 2);
-    display.setTextColor(GxEPD_BLACK);
-  // display.firstPage();
-  // do
-  // {
-  //   display.fillScreen(GxEPD_WHITE);
-    eventCounter = 0;
-    for(byte i = 0; i < daysNumber; i++) {
-      byte eventsNumber = calEvents[i].events.size();
-      for(byte j = 0; j < eventsNumber; j++) {
-        uint16_t w = tbw_date_max + 15 - calEventBounds[i].events[j].tbx;
-        uint16_t z = offset + padding + (eventCounter * tbh_max) - calEventBounds[i].events[j].tby;
-        display.setCursor(w, z);
-        display.print(calEvents[i].events[j]);
-        eventCounter ++;
-      }
-    }
-  }
-  while (display.nextPage());
+//   display.setPartialWindow(0, offset, tbw_date_max + tbw_max + 10, tbh_max * eventCounter + padding * 2);
+//   display.firstPage();
+//   do
+//   {
+//     display.setTextColor(GxEPD_WHITE);
+//     display.fillScreen(GxEPD_WHITE);
+//     display.fillRect(0, offset, tbw_date_max + 10, tbh_date_max * eventCounter + padding * 2, GxEPD_BLACK);    
+//     byte eventCounter = 0;
+//     for(byte i = 0; i < daysNumber; i++) {
 
-  return tbw_date_max + tbw_max + 25;
-}
+//       uint16_t x = 5 - calEventBounds[i].start.tbx;
+//       uint16_t y = offset + padding + (eventCounter * tbh_max) - calEventBounds[i].events[0].tby;
+
+//       display.setCursor(x, y);
+//       display.print(calEvents[i].start);
+//       byte eventsNumber = calEvents[i].events.size();
+//       eventCounter += eventsNumber;
+//     }
+//   // }
+//   // while (display.nextPage());
+
+
+//   // // display.setPartialWindow(tbw_date + 15, offset, tbw_max + 15, tbh_max * eventCounter + padding * 2);
+//     display.setTextColor(GxEPD_BLACK);
+//   // display.firstPage();
+//   // do
+//   // {
+//   //   display.fillScreen(GxEPD_WHITE);
+//     eventCounter = 0;
+//     for(byte i = 0; i < daysNumber; i++) {
+//       byte eventsNumber = calEvents[i].events.size();
+//       for(byte j = 0; j < eventsNumber; j++) {
+//         uint16_t w = tbw_date_max + 15 - calEventBounds[i].events[j].tbx;
+//         uint16_t z = offset + padding + (eventCounter * tbh_max) - calEventBounds[i].events[j].tby;
+//         display.setCursor(w, z);
+//         display.print(calEvents[i].events[j]);
+//         eventCounter ++;
+//       }
+//     }
+//   }
+//   while (display.nextPage());
+
+//   return tbw_date_max + tbw_max + 25;
+// }
 
 int displayCalendarData2() {
   const int offset = 35;
