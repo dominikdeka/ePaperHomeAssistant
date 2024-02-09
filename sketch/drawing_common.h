@@ -317,19 +317,11 @@ void Nodata(int x, int y, bool IconSize, String IconName) {
 //#########################################################################################
 void drawString(int x, int y, String text, alignment align, const uint8_t *fontName) {
   u8g2Fonts.setFont(fontName);
-  // int16_t  x1, y1; //the bounds of x,y and w and h of the variable 'text' in pixels.
-  // uint16_t w;
   uint16_t w = u8g2Fonts.getUTF8Width(text.c_str());
-  // display.setTextWrap(false);
-  // display.getTextBounds(text, x, y, &x1, &y1, &w, &h);
-  Serial.print(text + " width: ");
-  Serial.println(w);
   if (align == RIGHT)  x = x - w;
   if (align == CENTER) x = x - w / 2;
   u8g2Fonts.setCursor(x, y);
   u8g2Fonts.print(text);
-  // display.setCursor(x, y + h);
-  // display.print(text);
 }
 
 int drawEventsDay(int currentHeight, int maxTableHeight, String date, int col1W, std::vector<String> events, int col2W) {

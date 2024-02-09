@@ -32,61 +32,81 @@ int displayCalendarData2();
 struct Bounds getMaxBounds(String words[], byte size);
 
 void displayCurrentState() {
-  display.setRotation(0);
-  display.setFont(&FreeSerifBold12pt7b);
-
-  String modeMsg = modes[applicationState.viewMode];
+  // display.setRotation(0);
+  // display.setFont(&FreeSerifBold12pt7b);
 
   byte modesNo = sizeof(modes) / sizeof(String);
-  Bounds modesBounds[3];
-  int accuw = 0;
-  int16_t tbx, tby; uint16_t tbw, tbh;
-  for(int i = modesNo - 1; i >= 0; i--) {
-    display.getTextBounds(modes[i], accuw, 0, &tbx, &tby, &tbw, &tbh);
-    accuw += tbw;
-    modesBounds[i] = {tbx, tby, tbw, tbh};
-  }
+  // Bounds modesBounds[3];
+  // int accuw = 0;
+  // int16_t tbx, tby; uint16_t tbw, tbh;
+  // for(int i = modesNo - 1; i >= 0; i--) {
+  //   display.getTextBounds(modes[i], accuw, 0, &tbx, &tby, &tbw, &tbh);
+  //   accuw += tbw;
+  //   modesBounds[i] = {tbx, tby, tbw, tbh};
+  // }
 
-  Bounds bounds = getMaxBounds(modes, sizeof(modes) / sizeof(String));
-  uint16_t maxh = bounds.tbh;
+  // Bounds bounds = getMaxBounds(modes, sizeof(modes) / sizeof(String));
+  // uint16_t maxh = bounds.tbh;
 
   String phaseMsg = phases[applicationState.currentPhase];
-  display.getTextBounds(phaseMsg, 0, 0, &tbx, &tby, &tbw, &tbh);
-  int16_t phaseX = 0 - tbx;
-  int16_t phaseY = 0 - tby;
-  uint16_t phaseW = tbw;
-  if (tbh > maxh) {
-    maxh = tbh;
-  }
+  // display.getTextBounds(phaseMsg, 0, 0, &tbx, &tby, &tbw, &tbh);
+  // int16_t phaseX = 0 - tbx;
+  // int16_t phaseY = 0 - tby;
+  // uint16_t phaseW = tbw;
+  // if (tbh > maxh) {
+  //   maxh = tbh;
+  // }
 
   String batteryMsg = "bateria: " + String(applicationState.voltage) + 'V';
-  display.getTextBounds(batteryMsg, 0, 0, &tbx, &tby, &tbw, &tbh);
-  uint16_t batteryX = (display.width() - 30 - accuw + phaseW)/2 - tbw/2 - bounds.tbx;
-  uint16_t batteryY = 0 - bounds.tby;
 
-  display.setPartialWindow(0, 0, display.width(), maxh + 8);
+  // display.getTextBounds(batteryMsg, 0, 0, &tbx, &tby, &tbw, &tbh);
+  // uint16_t batteryX = (display.width() - 30 - accuw + phaseW)/2 - tbw/2 - bounds.tbx;
+  // uint16_t batteryY = 0 - bounds.tby;
+
+  display.setPartialWindow(0, 0, display.width(), 25);
   display.firstPage();
+  u8g2Fonts.setFont(u8g2_font_helvB14_te);
   do
   {
     display.fillScreen(GxEPD_WHITE);
     display.setTextColor(GxEPD_BLACK);
+    uint16_t accumulatedWidth = 0;
     for(int i = modesNo - 1; i >= 0; i--) {    
-      int x = display.width() - modesBounds[i].tbw - (modesNo - i + 1) * 10 - modesBounds[i].tbx;
-      int y = 0 - modesBounds[i].tby;
+      uint16_t w = u8g2Fonts.getUTF8Width(modes[i].c_str());
+      accumulatedWidth += w + 10;
+      int x = display.width() - accumulatedWidth;
+      // int y = 0 - modesBounds[i].tby;
       if (i == applicationState.viewMode) {
-        display.setTextColor(GxEPD_WHITE);
-        display.fillRect(x - 5, 0, modesBounds[i].tbw + 10, maxh + 8, GxEPD_BLACK);
+        u8g2Fonts.setForegroundColor(GxEPD_WHITE);
+        u8g2Fonts.setBackgroundColor(GxEPD_BLACK);
+        display.fillRect(x, 0, w + 10, 25, GxEPD_BLACK);
       }
-      display.setCursor(x, y + 5);
-      display.print(modes[i]);
-      display.setTextColor(GxEPD_BLACK);
+
+      // u8g2Fonts.setFont(fontName);
+      // uint16_t w = u8g2Fonts.getUTF8Width(text.c_str());
+      // if (align == RIGHT)  x = x - w;
+      // if (align == CENTER) x = x - w / 2;
+      // u8g2Fonts.setCursor(x, y);
+      // u8g2Fonts.print(text);
+
+      drawString(x + 5, 20, modes[i], LEFT, u8g2_font_helvB14_te);
+
+      // display.setCursor(x, y + 5);
+      // display.print(modes[i]);
+      u8g2Fonts.setForegroundColor(GxEPD_BLACK);
+      u8g2Fonts.setBackgroundColor(GxEPD_WHITE);
     }
+    uint16_t batW = u8g2Fonts.getUTF8Width(batteryMsg.c_str());
+    uint16_t phaseW = u8g2Fonts.getUTF8Width(phaseMsg.c_str());
 
-    display.setCursor(batteryX, batteryY + 5);
-    display.print(batteryMsg);
+    drawString((display.width() - accumulatedWidth + phaseW)/2, 20, batteryMsg, CENTER, u8g2_font_helvB14_te);
+    drawString(0, 20, phaseMsg, LEFT, u8g2_font_helvB14_te);
 
-    display.setCursor(phaseX, phaseY + 5);
-    display.print(phaseMsg);
+    // display.setCursor(batteryX, batteryY + 5);
+    // display.print(batteryMsg);
+
+    // display.setCursor(0, phaseY + 5);
+    // display.print(phaseMsg);
   }
   while (display.nextPage());
 
@@ -156,6 +176,7 @@ void drawGraph(int x_pos, int y_pos, int gwidth, int gheight, float Y1Min, float
   int day1X, day2X, day3X;
   for (int gx = 0; gx < readings; gx++) {
     if(String(WxForecast[gx].Period.substring(0,10)) != lastDate) {
+      Serial.println(WxForecast[gx].Period);
       lastDate = String(WxForecast[gx].Period.substring(0,10));
       x2 = x_pos + gx * (gwidth / readings) + 2;
       drawString(x2, y_pos + gheight + 13, "|", LEFT);

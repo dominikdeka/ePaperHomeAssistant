@@ -1,4 +1,4 @@
-//TODO - u8g2, fix mqtt structure, refactoring..., status, resign after x tries (show in status) + deep sleep (battery below some level)
+//TODO - kreseczka o 3. a nie o północy, u8g2, usunąć setFont i inne śmieci, fix mqtt structure, refactoring..., status, resign after x tries (show in status) + deep sleep (battery below some level)
 #define ENABLE_GxEPD2_GFX 0
 #define TIME_TO_SLEEP 1800       /* Time ESP32 will go to sleep (in seconds, max value 1800 = 30m) */
 #define WAKEUP_SKIP 2 /* Skip every n wakups to save battery */ 
@@ -237,30 +237,6 @@ void deepSleep() {
   display.hibernate();
   display.end(); // not sure if it is needed?
   esp_deep_sleep_start();
-}
-
-void clearScreen()
-{
-  String messsage = phases[applicationState.currentPhase];
-  display.setRotation(0);
-  display.setFont(&FreeSerifBold12pt7b);
-  display.setTextColor(GxEPD_BLACK);
-
-  int16_t tbx, tby; uint16_t tbw, tbh;
-  display.getTextBounds(messsage, 0, 0, &tbx, &tby, &tbw, &tbh);
-
-  uint16_t x = 0 - tbx;
-  uint16_t y = 0 - tby;
-
-  display.setFullWindow();
-  display.firstPage();
-  do
-  {
-    display.fillScreen(GxEPD_WHITE);
-    display.setCursor(x, y);
-    display.print(messsage);
-  }
-  while (display.nextPage());
 }
 
 void mqttReconnect() {
