@@ -1,4 +1,4 @@
-//TODO - kreseczka o 3. a nie o północy, u8g2, usunąć setFont i inne śmieci, fix mqtt structure, refactoring..., status, resign after x tries (show in status) + deep sleep (battery below some level)
+//TODO - u8g2 - cleanup, section sizes in constants, use text width from drawString, fix mqtt structure, refactoring..., status, resign after x tries (show in status) + deep sleep (battery below some level)
 #define ENABLE_GxEPD2_GFX 0
 #define TIME_TO_SLEEP 1800       /* Time ESP32 will go to sleep (in seconds, max value 1800 = 30m) */
 #define WAKEUP_SKIP 2 /* Skip every n wakups to save battery */ 
@@ -11,10 +11,6 @@
 #include "images.h"
 
 #include <GxEPD2_BW.h> // v1.5.3
-#include <Fonts/FreeSerif9pt7b.h>
-#include <Fonts/FreeSerifBold12pt7b.h>
-#include <Fonts/FreeSerif12pt7b.h>
-#include <Fonts/FreeSerifBold24pt7b.h>
 #include <U8g2_for_Adafruit_GFX.h>
 
 // select the display class and display driver class in the following file (new style):
@@ -133,11 +129,10 @@ void loop()
   if (applicationState.currentPhase == 5) { // draw data on screen
     int leftOffset = 0;    
     if (applicationState.viewMode == 0 || applicationState.viewMode == 1) {
-      leftOffset = displayCalendarData2();
+      leftOffset = displayCalendarData();
     }
     if (applicationState.viewMode == 0 || applicationState.viewMode == 2) {
-      int topOffset = displayWeather(leftOffset);
-      // displayWeatherData(leftOffset, topOffset);
+      displayWeather(leftOffset);
     }
     nextPhase();
     delay(2000);

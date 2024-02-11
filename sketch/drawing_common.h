@@ -23,7 +23,7 @@ void Haze(int x, int y, bool IconSize, String IconName);
 void CloudCover(int x, int y, int CCover);
 void Visibility(int x, int y, String Visi);
 void Nodata(int x, int y, bool IconSize, String IconName);
-void drawString(int x, int y, String text, alignment align, const uint8_t *fontName = u8g2_font_helvB12_tf);
+uint16_t drawString(int x, int y, String text, alignment align, const uint8_t *fontName = u8g2_font_helvB12_tf);
 int drawEventsDay(String date, int col1W, std::vector<String> events, int col2W);
 int wrapText(const char* text, int x, int y, int maxWidth);
 
@@ -287,7 +287,6 @@ void CloudCover(int x, int y, int CCover) {
   addcloud(x - 9, y - 3, Small * 0.5, 2); // Cloud top left
   addcloud(x + 3, y - 3, Small * 0.5, 2); // Cloud top right
   addcloud(x, y,         Small * 0.5, 2); // Main cloud
-  display.setFont(&FreeSerif9pt7b);
   drawString(x + 15, y - 5, String(CCover) + "%", LEFT);
 }
 //#########################################################################################
@@ -305,23 +304,21 @@ void Visibility(int x, int y, String Visi) {
     display.drawPixel(x + r * cos(i), 1 + y + r / 2 + r * sin(i), GxEPD_BLACK);
   }
   display.fillCircle(x, y, r / 4, GxEPD_BLACK);
-  display.setFont(&FreeSerif9pt7b);
   drawString(x + 12, y - 3, Visi, LEFT);
 }
 //#########################################################################################
 void Nodata(int x, int y, bool IconSize, String IconName) {
-  if (IconSize == LargeIcon) display.setFont(&FreeSerif9pt7b); else display.setFont(&FreeSerif9pt7b);
   drawString(x - 3, y - 10, "?", CENTER);
-  display.setFont(&FreeSerif9pt7b);
 }
 //#########################################################################################
-void drawString(int x, int y, String text, alignment align, const uint8_t *fontName) {
+uint16_t drawString(int x, int y, String text, alignment align, const uint8_t *fontName) {
   u8g2Fonts.setFont(fontName);
-  uint16_t w = u8g2Fonts.getUTF8Width(text.c_str());
-  if (align == RIGHT)  x = x - w;
-  if (align == CENTER) x = x - w / 2;
+  uint16_t width = u8g2Fonts.getUTF8Width(text.c_str());
+  if (align == RIGHT)  x = x - width;
+  if (align == CENTER) x = x - width / 2;
   u8g2Fonts.setCursor(x, y);
   u8g2Fonts.print(text);
+  return width;
 }
 
 int drawEventsDay(int currentHeight, int maxTableHeight, String date, int col1W, std::vector<String> events, int col2W) {

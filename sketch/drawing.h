@@ -1,22 +1,9 @@
-struct Bounds {
-    int16_t tbx; 
-    int16_t tby; 
-    uint16_t tbw;
-    uint16_t tbh;
-};
-
-// String  Time_str, Date_str; // strings to hold time and received weather data
-// int     wifi_signal, CurrentHour = 0, CurrentMin = 0, CurrentSec = 0;
-// long    StartTime = 0;
-
 #define autoscale_on  true
 #define autoscale_off false
 #define barchart_on   true
 #define barchart_off  false
 
-// float pressure_readings[max_readings]    = {0};
 float temperature_readings[max_readings] = {0};
-// float humidity_readings[max_readings]    = {0};
 float rain_readings[max_readings]        = {0};
 float snow_readings[max_readings]        = {0};
 
@@ -26,73 +13,33 @@ void displayForecastWeather(int x, int y, int index, int width);
 void displayForecastSection(int x, int y);
 void displayConditionsSection(int x, int y, int width, String IconName);
 void displayToday(int leftOffset, int topOffset, int width, int height);
-int displayWeather(int leftOffset);
-// int displayCalendarData();
-int displayCalendarData2();
-struct Bounds getMaxBounds(String words[], byte size);
+void displayWeather(int leftOffset);
+int displayCalendarData();
 
 void displayCurrentState() {
-  // display.setRotation(0);
-  // display.setFont(&FreeSerifBold12pt7b);
-
   byte modesNo = sizeof(modes) / sizeof(String);
-  // Bounds modesBounds[3];
-  // int accuw = 0;
-  // int16_t tbx, tby; uint16_t tbw, tbh;
-  // for(int i = modesNo - 1; i >= 0; i--) {
-  //   display.getTextBounds(modes[i], accuw, 0, &tbx, &tby, &tbw, &tbh);
-  //   accuw += tbw;
-  //   modesBounds[i] = {tbx, tby, tbw, tbh};
-  // }
-
-  // Bounds bounds = getMaxBounds(modes, sizeof(modes) / sizeof(String));
-  // uint16_t maxh = bounds.tbh;
-
   String phaseMsg = phases[applicationState.currentPhase];
-  // display.getTextBounds(phaseMsg, 0, 0, &tbx, &tby, &tbw, &tbh);
-  // int16_t phaseX = 0 - tbx;
-  // int16_t phaseY = 0 - tby;
-  // uint16_t phaseW = tbw;
-  // if (tbh > maxh) {
-  //   maxh = tbh;
-  // }
-
   String batteryMsg = "bateria: " + String(applicationState.voltage) + 'V';
-
-  // display.getTextBounds(batteryMsg, 0, 0, &tbx, &tby, &tbw, &tbh);
-  // uint16_t batteryX = (display.width() - 30 - accuw + phaseW)/2 - tbw/2 - bounds.tbx;
-  // uint16_t batteryY = 0 - bounds.tby;
 
   display.setPartialWindow(0, 0, display.width(), 25);
   display.firstPage();
-  u8g2Fonts.setFont(u8g2_font_helvB14_te);
   do
   {
     display.fillScreen(GxEPD_WHITE);
-    display.setTextColor(GxEPD_BLACK);
+    u8g2Fonts.setFont(u8g2_font_helvB14_te);
     uint16_t accumulatedWidth = 0;
     for(int i = modesNo - 1; i >= 0; i--) {    
       uint16_t w = u8g2Fonts.getUTF8Width(modes[i].c_str());
       accumulatedWidth += w + 10;
       int x = display.width() - accumulatedWidth;
-      // int y = 0 - modesBounds[i].tby;
       if (i == applicationState.viewMode) {
         u8g2Fonts.setForegroundColor(GxEPD_WHITE);
         u8g2Fonts.setBackgroundColor(GxEPD_BLACK);
         display.fillRect(x, 0, w + 10, 25, GxEPD_BLACK);
       }
 
-      // u8g2Fonts.setFont(fontName);
-      // uint16_t w = u8g2Fonts.getUTF8Width(text.c_str());
-      // if (align == RIGHT)  x = x - w;
-      // if (align == CENTER) x = x - w / 2;
-      // u8g2Fonts.setCursor(x, y);
-      // u8g2Fonts.print(text);
-
       drawString(x + 5, 20, modes[i], LEFT, u8g2_font_helvB14_te);
 
-      // display.setCursor(x, y + 5);
-      // display.print(modes[i]);
       u8g2Fonts.setForegroundColor(GxEPD_BLACK);
       u8g2Fonts.setBackgroundColor(GxEPD_WHITE);
     }
@@ -101,12 +48,6 @@ void displayCurrentState() {
 
     drawString((display.width() - accumulatedWidth + phaseW)/2, 20, batteryMsg, CENTER, u8g2_font_helvB14_te);
     drawString(0, 20, phaseMsg, LEFT, u8g2_font_helvB14_te);
-
-    // display.setCursor(batteryX, batteryY + 5);
-    // display.print(batteryMsg);
-
-    // display.setCursor(0, phaseY + 5);
-    // display.print(phaseMsg);
   }
   while (display.nextPage());
 
@@ -134,10 +75,6 @@ void drawGraph(int x_pos, int y_pos, int gwidth, int gheight, float Y1Min, float
   last_y = y_pos + (Y1Max - constrain(DataArray[1], Y1Min, Y1Max)) / (Y1Max - Y1Min) * gheight;
   display.drawRect(x_pos, y_pos, gwidth + 3, gheight + 2, GxEPD_BLACK);
   drawString(x_pos + gwidth / 2, y_pos - 2, title, CENTER);
-  // int16_t tbx, tby; uint16_t tbw, accuw, tbh;
-  // display.getTextBounds(title, 0, 0, &tbx, &tby, &tbw, &tbh);
-  // display.setCursor(x_pos + (gwidth-tbw) / 2, y_pos - 15 - tby);
-  // display.print(title);
 
   // Draw the data
   for (int gx = 0; gx < readings; gx++) {
@@ -176,7 +113,6 @@ void drawGraph(int x_pos, int y_pos, int gwidth, int gheight, float Y1Min, float
   int day1X, day2X, day3X;
   for (int gx = 0; gx < readings; gx++) {
     if(String(WxForecast[gx].Period.substring(0,10)) != lastDate) {
-      Serial.println(WxForecast[gx].Period);
       lastDate = String(WxForecast[gx].Period.substring(0,10));
       x2 = x_pos + gx * (gwidth / readings) + 2;
       drawString(x2, y_pos + gheight + 13, "|", LEFT);
@@ -199,7 +135,6 @@ void displayForecastWeather(int x, int y, int index, int width) {
 }
 
 void displayForecastSection(int x, int y, int width) {
-  display.setFont(&FreeSerif9pt7b);
   int f = 0;
   do {
     displayForecastWeather(x, y, f, width);
@@ -208,24 +143,16 @@ void displayForecastSection(int x, int y, int width) {
   // Pre-load temporary arrays with with data - because C parses by reference
   int r = 0;
   do {
-    // if (Units == "I") pressure_readings[r] = WxForecast[r].Pressure * 0.02953;   else pressure_readings[r] = WxForecast[r].Pressure;
     if (Units == "I") rain_readings[r]     = WxForecast[r].Rainfall * 0.0393701; else rain_readings[r]     = WxForecast[r].Rainfall;
     if (Units == "I") snow_readings[r]     = WxForecast[r].Snowfall * 0.0393701; else snow_readings[r]     = WxForecast[r].Snowfall;
     temperature_readings[r] = WxForecast[r].Temperature;
-    // humidity_readings[r]    = WxForecast[r].Humidity;
     r++;
   } while (r < max_readings);
   int gwidth = 150, gheight = 72;
   int gx = (width - gwidth * 2) / 3 + 5;
   int gy = y + 100;
   int gap = gwidth + gx;
-  // display.setFont(&FreeSerif9pt7b);
-  // drawString(SCREEN_WIDTH / 2, gy - 40, TXT_FORECAST_VALUES, CENTER); // Based on a graph height of 60
-  // display.setFont(&FreeSerif9pt7b);
-  // (x,y,width,height,MinValue, MaxValue, Title, Data Array, AutoScale, ChartMode)
-  // DrawGraph(gx + 0 * gap, gy, gwidth, gheight, 900, 1050, Units == "M" ? TXT_PRESSURE_HPA : TXT_PRESSURE_IN, pressure_readings, max_readings, autoscale_on, barchart_off);
   drawGraph(x + gx + 0 * gap, gy, gwidth, gheight, 10, 30,    Units == "M" ? TXT_TEMPERATURE_C : TXT_TEMPERATURE_F, temperature_readings, max_readings, autoscale_on, barchart_off);
-  // DrawGraph(gx + 2 * gap, gy, gwidth, gheight, 0, 100,   TXT_HUMIDITY_PERCENT, humidity_readings, max_readings, autoscale_off, barchart_off);
   const int Rain_array_size = sizeof(rain_readings) / sizeof(float);
   const int Snow_array_size = sizeof(snow_readings) / sizeof(float);
   if (SumOfPrecip(rain_readings, Rain_array_size) >= SumOfPrecip(snow_readings, Snow_array_size))
@@ -234,35 +161,24 @@ void displayForecastSection(int x, int y, int width) {
 }
 //#########################################################################################
 void displayConditionsSection(int x, int y, int width, String IconName) {
+  // wheather large icon
   int iconCentreX = x + 86; int iconCentreY =  y + 70;
   displayWheatherIcon(iconCentreX, iconCentreY, IconName, LargeIcon);
 
-  int16_t tbx, tby; uint16_t tbw, accuw, tbh;
-
+  // cloud cover small icon
   iconCentreX = iconCentreX + 90;
   iconCentreY = iconCentreY - 45;
-
   addcloud(iconCentreX - 9, iconCentreY - 3, Small * 0.5, 2); // Cloud top left
   addcloud(iconCentreX + 3, iconCentreY - 3, Small * 0.5, 2); // Cloud top right
   addcloud(iconCentreX, iconCentreY, Small * 0.5, 2); // Main cloud
-  display.setFont(&FreeSerif9pt7b);
+
   String cloudCover = String(WxConditions[0].Cloudcover) + "%";
   String humidity = TXT_HUMIDITY + ": " + String(WxConditions[0].Humidity, 0) + "%";
-  // display.getTextBounds(cloudCover, 0, 0, &tbx, &tby, &tbw, &tbh);
-  // display.setCursor(iconCentreX + 20, iconCentreY - 10 - tby);
-  // display.print(cloudCover);
-  accuw = tbw;
-  tbh = 22;
+  uint16_t tbh = 22;
   drawString(iconCentreX + 20 + 5, iconCentreY, cloudCover + "  " + humidity, LEFT);
-  // display.getTextBounds(humidity, 0, 0, &tbx, &tby, &tbw, &tbh);
-  // display.setCursor(iconCentreX + 24 + accuw + 5, iconCentreY - 10 - tby);
-  // display.print(humidity);
 
   String temperature = TXT_TEMPERATURES + ": " + String(WxConditions[0].Temperature, 1) + "°C (" + String(WxConditions[0].High, 0) + "°|" + String(WxConditions[0].Low, 0) + "°)";
   drawString(iconCentreX - 20, iconCentreY + tbh, temperature, LEFT);
-  // display.getTextBounds(temperature, 0, 0, &tbx, &tby, &tbw, &tbh);
-  // display.setCursor(iconCentreX - 20, iconCentreY - 5 - tby + tbh);
-  // display.print(temperature);
 
   String slope_direction = TXT_PRESSURE_STEADY;
   if (WxConditions[0].Trend == "+") slope_direction = TXT_PRESSURE_RISING;
@@ -270,82 +186,25 @@ void displayConditionsSection(int x, int y, int width, String IconName) {
 
   String preasure = TXT_PRESSURE + ": " + String(WxConditions[0].Pressure, 0) + "hPa (" + slope_direction + ")";
   drawString(iconCentreX - 20, iconCentreY + 2 * tbh, preasure, LEFT);
-  // display.getTextBounds(preasure, 0, 0, &tbx, &tby, &tbw, &tbh);
-  // display.setCursor(iconCentreX - 20, iconCentreY - tby + 2 * tbh);
-  // display.print(preasure);
 
   String sunrise = TXT_SUNRISE + ": " + ConvertUnixTime(WxConditions[0].Sunrise + WxConditions[0].Timezone).substring(0, 5) + " " + TXT_SUNSET + ": " + ConvertUnixTime(WxConditions[0].Sunset + WxConditions[0].Timezone).substring(0, 5);
   drawString(iconCentreX - 20, iconCentreY + 3 * tbh, sunrise, LEFT);
-  // display.getTextBounds(sunrise, 0, 0, &tbx, &tby, &tbw, &tbh);
-  // display.setCursor(iconCentreX - 20, iconCentreY + 15 - tby + 3 * tbh);
-  // display.print(sunrise);
 }
 
 void displayToday(int leftOffset, int topOffset, int width, int height) {
   display.drawRect(leftOffset, topOffset, width, height, GxEPD_BLACK);
 
-  display.setTextColor(GxEPD_BLACK);
-  int16_t tbx, tby; uint16_t tbw, tbh;
-  
   drawString(leftOffset + width / 2, topOffset + 17, dateTime.month, CENTER);
   drawString(leftOffset + width / 2, topOffset + height - 5, dateTime.weekDay, CENTER);
   drawString(leftOffset + width / 2, topOffset + height / 2 + 21, dateTime.date, CENTER, u8g2_font_fub42_tf);
-  // display.setFont(&FreeSerif9pt7b);
-  // display.getTextBounds(dateTime.month, 0, 0, &tbx, &tby, &tbw, &tbh);
-  // display.setCursor(leftOffset + (width - tbw) / 2, topOffset + 5 - tby);
-  // display.print(dateTime.month);
-
-  // display.setFont(&FreeSerifBold24pt7b);
-  // display.getTextBounds(dateTime.date, 0, 0, &tbx, &tby, &tbw, &tbh);
-  // display.setCursor(leftOffset + (width - tbw) / 2, topOffset + (height - tbh) / 2 - tby);
-  // display.print(dateTime.date);
-
-  // display.setFont(&FreeSerif9pt7b);
-  // display.getTextBounds(dateTime.weekDay, 0, 0, &tbx, &tby, &tbw, &tbh);
-  // display.setCursor(leftOffset + (width - tbw) / 2, topOffset + height - tbh - tby - 5);
-  // display.print(dateTime.weekDay);
 }
 
-int displayWeather(int leftOffset) {
+void displayWeather(int leftOffset) {
   const int topOffset = 35;
   const byte padding = 5;
 
-  display.setRotation(0);
-  display.setFont(&FreeSerif9pt7b);
-  display.setTextColor(GxEPD_BLACK);
-
-  byte topicsNumber = sizeof(mqttTopics) / sizeof(MqttTopic);
-  byte otherNumber = 0;
-  String values[topicsNumber + otherNumber];
-  String labels[topicsNumber + otherNumber];
-  struct Bounds valuesBounds[topicsNumber + otherNumber];
-  struct Bounds labelsBounds[topicsNumber + otherNumber];
-  for(byte i = 0; i < topicsNumber + otherNumber; i++) {
-    labels[i] = mqttTopics[i].label + ": ";
-    values[i] = mqttTopics[i].tempValue + "°C/" + mqttTopics[i].humValue + "%";
-  }
-
-  // labels[topicsNumber + 2] = "cisnienie:";
-  // values[topicsNumber + 2] = String(WxConditions[0].Pressure, 0) + "hPa";
-  // labels[topicsNumber + 3] = "temperatura:";
-  // values[topicsNumber + 3] = String(WxConditions[0].Temperature, 1) + " C";
-
-  for(byte i = 0; i < topicsNumber + otherNumber; i++) {
-    int16_t tbx, tby; uint16_t tbw, tbh;
-    display.getTextBounds(values[i], 0, 0, &tbx, &tby, &tbw, &tbh);
-    valuesBounds[i] = {tbx, tby, tbw, tbh};
-
-    display.getTextBounds(labels[i], 0, 0, &tbx, &tby, &tbw, &tbh);
-    labelsBounds[i] = {tbx, tby, tbw, tbh};
-  }
-
-    // Serial.print(tbh);
-    // Serial.print(tbh * multiple);
-    // Serial.print(tby);
-  Bounds maxValuesBounds = getMaxBounds(values, topicsNumber + otherNumber);
-  Bounds maxLabelsBounds = getMaxBounds(labels, topicsNumber + otherNumber);
-  int tableWidth = 200; //maxValuesBounds.tbw + maxLabelsBounds.tbw + 10 + (2 * padding);
-  int tableHeight = 140; //maxLabelsBounds.tbh * (topicsNumber + otherNumber) + (2 * padding);
+  int tableWidth = 200; 
+  int tableHeight = 140; 
   int tableLeftOffset = display.width() - tableWidth;
   int todayWitdth = display.width() - tableWidth - leftOffset - 5;
   display.setPartialWindow(leftOffset, topOffset, display.width() - leftOffset, display.height()- topOffset);
@@ -353,9 +212,6 @@ int displayWeather(int leftOffset) {
   u8g2Fonts.setFont(u8g2_font_helvB12_tf);
   do
   {
-
-    // display.fillRect(display.width() - 200, topOffset, 200, 140, GxEPD_BLACK);
-    // display.fillRect(GxEPD_WHITE);
     display.drawBitmap(display.width() - 200, topOffset, home, 200, 140, GxEPD_BLACK);
 
     u8g2Fonts.setCursor(tableLeftOffset + 61, topOffset + 28);
@@ -370,124 +226,17 @@ int displayWeather(int leftOffset) {
     u8g2Fonts.print(mqttTopics[0].tempValue + "°");
     u8g2Fonts.setCursor(tableLeftOffset + 130, topOffset + 63);
     u8g2Fonts.print(mqttTopics[2].tempValue + "°");
-    // for(byte i = 0; i < topicsNumber + otherNumber; i++) {
 
-    //   uint16_t x = tableLeftOffset + 10 + maxLabelsBounds.tbw;
-    //   uint16_t y = topOffset + padding + (maxLabelsBounds.tbh * i) - valuesBounds[i].tby;
-    //   display.setTextColor(GxEPD_BLACK);
-    //   display.setCursor(x, y);
-    //   display.print(values[i]);
-    //   // x = tableLeftOffset + maxLabelsBounds.tbw - labelsBounds[i].tbw;
-    //   // y = topOffset + padding + (maxLabelsBounds.tbh * i) - labelsBounds[i].tby;
-    //   // display.setTextColor(GxEPD_BLACK);
-    //   // display.setCursor(x, y);
-    //   // display.print(labels[i]);
-    // }
     displayConditionsSection(leftOffset, topOffset + tableHeight, display.width() - leftOffset, WxConditions[0].Icon);
     displayForecastSection(leftOffset, topOffset + tableHeight + 120, display.width() - leftOffset);
     displayToday(leftOffset, topOffset, todayWitdth, tableHeight);
 
   }
   while (display.nextPage());
-
-  return topOffset + maxLabelsBounds.tbh * 6 + 10;
 }
 
-// int displayCalendarData() {
-//   const int offset = 35;
-//   const int padding = 5;
-//   display.setRotation(0);
-//   display.setFont(&FreeSerif12pt7b);
 
-//   byte daysNumber = calEvents.size();
-//   typedef struct {
-//       Bounds start;
-//       std::vector<Bounds> events;
-//   } calDateBounds;
-//   std::vector<calDateBounds> calEventBounds;
-
-
-//   uint16_t tbw_date_max, tbh_date_max;
-//   uint16_t tbw_max, tbh_max;
-//   // display.getTextBounds(calEvents[0].start, 0, 0, &tbx_date, &tby_date, &tbw_date, &tbh_date);
-//   byte eventCounter = 0;
-//   for(byte i = 0; i < daysNumber; i++) {
-//     int16_t tbx, tby; uint16_t tbw, tbh;
-//     display.getTextBounds(calEvents[i].start, 0, 0, &tbx, &tby, &tbw, &tbh);
-//     if (tbw > tbw_date_max) {
-//       tbw_date_max = tbw;
-//     }
-//     if (tbh > tbh_date_max) {
-//       tbh_date_max = tbh;
-//     }
-
-//     calDateBounds bounds;
-//     bounds.start = {tbx, tby, tbw, tbh};
-
-//     byte eventsNumber = calEvents[i].events.size();
-//     for(byte j = 0; j < eventsNumber; j++) {
-//       display.getTextBounds(calEvents[i].events[j], 0, 0, &tbx, &tby, &tbw, &tbh);
-
-//       if (tbw > tbw_max) {
-//         tbw_max = tbw;
-//       }
-//       if (tbh > tbh_max) {
-//         tbh_max = tbh;
-//       }
-//       bounds.events.push_back({tbx, tby, tbw, tbh});
-
-//       eventCounter ++;
-//     }
-//     calEventBounds.push_back(bounds);
-//   }
-
-
-//   display.setPartialWindow(0, offset, tbw_date_max + tbw_max + 10, tbh_max * eventCounter + padding * 2);
-//   display.firstPage();
-//   do
-//   {
-//     display.setTextColor(GxEPD_WHITE);
-//     display.fillScreen(GxEPD_WHITE);
-//     display.fillRect(0, offset, tbw_date_max + 10, tbh_date_max * eventCounter + padding * 2, GxEPD_BLACK);    
-//     byte eventCounter = 0;
-//     for(byte i = 0; i < daysNumber; i++) {
-
-//       uint16_t x = 5 - calEventBounds[i].start.tbx;
-//       uint16_t y = offset + padding + (eventCounter * tbh_max) - calEventBounds[i].events[0].tby;
-
-//       display.setCursor(x, y);
-//       display.print(calEvents[i].start);
-//       byte eventsNumber = calEvents[i].events.size();
-//       eventCounter += eventsNumber;
-//     }
-//   // }
-//   // while (display.nextPage());
-
-
-//   // // display.setPartialWindow(tbw_date + 15, offset, tbw_max + 15, tbh_max * eventCounter + padding * 2);
-//     display.setTextColor(GxEPD_BLACK);
-//   // display.firstPage();
-//   // do
-//   // {
-//   //   display.fillScreen(GxEPD_WHITE);
-//     eventCounter = 0;
-//     for(byte i = 0; i < daysNumber; i++) {
-//       byte eventsNumber = calEvents[i].events.size();
-//       for(byte j = 0; j < eventsNumber; j++) {
-//         uint16_t w = tbw_date_max + 15 - calEventBounds[i].events[j].tbx;
-//         uint16_t z = offset + padding + (eventCounter * tbh_max) - calEventBounds[i].events[j].tby;
-//         display.setCursor(w, z);
-//         display.print(calEvents[i].events[j]);
-//         eventCounter ++;
-//       }
-//     }
-//   }
-//   while (display.nextPage());
-
-//   return tbw_date_max + tbw_max + 25;
-// }
-
-int displayCalendarData2() {
+int displayCalendarData() {
   const int offset = 35;
   const int tableWidth = 430;
   const int maxTableHeight = display.height() - offset;
@@ -523,21 +272,4 @@ int displayCalendarData2() {
   while (display.nextPage());
 
   return tableWidth;
-}
-
-struct Bounds getMaxBounds(String words[], byte size) {
-  struct Bounds bounds = {0, 0, 0, 0};
-  for (byte i=0;i<size;i++) {
-    int16_t tmp_tbx, tmp_tby; uint16_t tmp_tbw, tmp_tbh;
-    display.getTextBounds(words[i], 0, 0, &tmp_tbx, &tmp_tby, &tmp_tbw, &tmp_tbh);
-    if (tmp_tbw > bounds.tbw) {
-      bounds.tbx = tmp_tbx;
-      bounds.tbw = tmp_tbw;
-    }    
-    if (tmp_tbh > bounds.tbh) {
-      bounds.tby = tmp_tby;
-      bounds.tbh = tmp_tbh;
-    }
-  }
-  return bounds;
 }
