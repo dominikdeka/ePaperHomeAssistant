@@ -1,9 +1,13 @@
-//TODO - u8g2 - cleanup, section sizes in constants, use text width from drawString, fix mqtt structure, refactoring..., status, resign after x tries (show in status) + deep sleep (battery below some level)
+//TODOS - u8g2 - cleanup, section sizes in constants, read/draw refactor, use text width from drawString, fix mqtt structure, refactoring..., status, resign after x tries (show in status) + deep sleep (battery below some level)
 #define ENABLE_GxEPD2_GFX 0
 #define TIME_TO_SLEEP 1800       /* Time ESP32 will go to sleep (in seconds, max value 1800 = 30m) */
 #define WAKEUP_SKIP 2 /* Skip every n wakups to save battery */ 
 #define MAX_ATTEMPTS 4 /* Give up after MAX_ATTEMPTS try to connect any service */ 
 #define GPIO_BIT_MASK ((1ULL << GPIO_NUM_32) | (1ULL << GPIO_NUM_35))
+
+#define STATUS_AREA_HEIGH 25 /* top partial window height (max: 480) */
+#define CALENDAR_AREA_WIDTH 420 /* left bottom partial window width (max: 800) */
+
 
 #include "credentials.h"
 #include "settings.h"
@@ -11,13 +15,13 @@
 #include "images.h"
 
 #include <GxEPD2_BW.h> // v1.5.3
-#include <U8g2_for_Adafruit_GFX.h>
+#include <U8g2_for_Adafruit_GFX.h> // v1.8.0
 
 // select the display class and display driver class in the following file (new style):
 #include "GxEPD2_display_selection.h"
 
-#include <WiFi.h>
-#include "time.h"                     // Built-in
+#include <WiFi.h> // Built-in
+#include "time.h" // Built-in
 
 #include <PubSubClient.h> // v2.8
 
@@ -127,12 +131,11 @@ void loop()
     nextPhase();
   }
   if (applicationState.currentPhase == 5) { // draw data on screen
-    int leftOffset = 0;    
     if (applicationState.viewMode == 0 || applicationState.viewMode == 1) {
-      leftOffset = displayCalendarData();
+      displayCalendarData();
     }
     if (applicationState.viewMode == 0 || applicationState.viewMode == 2) {
-      displayWeather(leftOffset);
+      displayWeather();
     }
     nextPhase();
     delay(2000);

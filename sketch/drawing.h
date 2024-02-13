@@ -14,14 +14,14 @@ void displayForecastSection(int x, int y);
 void displayConditionsSection(int x, int y, int width, String IconName);
 void displayToday(int leftOffset, int topOffset, int width, int height);
 void displayWeather(int leftOffset);
-int displayCalendarData();
+void displayCalendarData();
 
 void displayCurrentState() {
   byte modesNo = sizeof(modes) / sizeof(String);
   String phaseMsg = phases[applicationState.currentPhase];
   String batteryMsg = "bateria: " + String(applicationState.voltage) + 'V';
 
-  display.setPartialWindow(0, 0, display.width(), 25);
+  display.setPartialWindow(0, 0, display.width(), STATUS_AREA_HEIGH);
   display.firstPage();
   do
   {
@@ -35,7 +35,7 @@ void displayCurrentState() {
       if (i == applicationState.viewMode) {
         u8g2Fonts.setForegroundColor(GxEPD_WHITE);
         u8g2Fonts.setBackgroundColor(GxEPD_BLACK);
-        display.fillRect(x, 0, w + 10, 25, GxEPD_BLACK);
+        display.fillRect(x, 0, w + 10, STATUS_AREA_HEIGH, GxEPD_BLACK);
       }
 
       drawString(x + 5, 20, modes[i], LEFT, u8g2_font_helvB14_te);
@@ -199,8 +199,9 @@ void displayToday(int leftOffset, int topOffset, int width, int height) {
   drawString(leftOffset + width / 2, topOffset + height / 2 + 21, dateTime.date, CENTER, u8g2_font_fub42_tf);
 }
 
-void displayWeather(int leftOffset) {
-  const int topOffset = 35;
+void displayWeather() {
+  const int leftOffset = CALENDAR_AREA_WIDTH;
+  const int topOffset = STATUS_AREA_HEIGH + 10;
   const byte padding = 5;
 
   int tableWidth = 200; 
@@ -236,10 +237,10 @@ void displayWeather(int leftOffset) {
 }
 
 
-int displayCalendarData() {
-  const int offset = 35;
-  const int tableWidth = 430;
-  const int maxTableHeight = display.height() - offset;
+void displayCalendarData() {
+  const int topOffset = STATUS_AREA_HEIGH + 10;
+  const int tableWidth = CALENDAR_AREA_WIDTH;
+  const int maxTableHeight = display.height() - topOffset;
 
   const int padding = 5;
 
@@ -257,19 +258,17 @@ int displayCalendarData() {
     }
   }
 
-  display.setPartialWindow(0, offset, tableWidth, display.width());
+  display.setPartialWindow(0, topOffset, CALENDAR_AREA_WIDTH, display.width());
   display.firstPage();
   do
   {
-    int currentHeight = offset;
+    int currentHeight = topOffset;
     for(byte i = 0; i < daysNumber; i++) {
-      currentHeight = drawEventsDay(currentHeight, maxTableHeight, calEvents[i].start, date_max_width, calEvents[i].events, tableWidth - date_max_width);
+      currentHeight = drawEventsDay(currentHeight, maxTableHeight, calEvents[i].start, date_max_width, calEvents[i].events, CALENDAR_AREA_WIDTH - date_max_width);
       if (currentHeight == 0) {
         break;
       }
     }
   }
   while (display.nextPage());
-
-  return tableWidth;
 }

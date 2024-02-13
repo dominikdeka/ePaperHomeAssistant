@@ -341,9 +341,7 @@ int drawEventsDay(int currentHeight, int maxTableHeight, String date, int col1W,
 
     int eventsHeight = 0;
     for(byte j = 0; j < eventsNumber; j++) {
-
-      // u8g2Fonts.setCursor(col1W, currentHeight + (lines + 1) * lineHeight);
-      eventsHeight += wrapText(events[j].c_str(), col1W + 5, currentHeight + eventsHeight, col2W - 40);//ugly hack
+      eventsHeight += wrapText(events[j].c_str(), col1W + 5, currentHeight + eventsHeight, col2W);
       if (currentHeight + eventsHeight + lineHeight > maxTableHeight) {
         return 0;
       }
