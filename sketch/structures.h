@@ -1,14 +1,17 @@
-#ifndef FORECAST_RECORD_H_
-#define FORECAST_RECORD_H_
+#ifndef STRUCTURES_H_
+#define STRUCTURES_H_
 
 #include <Arduino.h>
 
 typedef struct {
   byte wakeupCount;
   byte currentPhase;
-  int currentPhaseStart;
   byte viewMode;
   float voltage;
+  String month;
+  String weekDay;
+  String date;  
+  String lastUpdate;
 } ApplicationState;
 
 typedef struct {
@@ -23,13 +26,6 @@ typedef struct {
     String tempValue;
     String humValue;
 } MqttTopic;
-
-typedef struct {
-  String month;
-  String weekDay;
-  String date;  
-  String lastUpdate;
-} DateTime;
 
 typedef struct {
   int      Dt;
@@ -63,4 +59,4 @@ typedef struct {
   int      Timezone;
 } ForecastRecord;
 
-#endif /* ifndef FORECAST_RECORD_H_ */
+#endif /* ifndef STRUCTURES_H_ */

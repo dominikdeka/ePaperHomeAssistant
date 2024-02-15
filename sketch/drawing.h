@@ -18,8 +18,13 @@ void displayCalendarData();
 
 void displayCurrentState() {
   byte modesNo = sizeof(modes) / sizeof(String);
-  String phaseMsg = phases[applicationState.currentPhase];
-  String batteryMsg = "bateria: " + String(applicationState.voltage) + 'V';
+
+  String phaseMsg = applicationState.currentPhase < 6
+    ? phases[applicationState.currentPhase]
+    : applicationState.lastUpdate;
+  String batteryMsg = applicationState.voltage > MINIMAL_VOLTAGE  
+    ? "bateria: " + String(applicationState.voltage) + 'V'
+    : "naladuj baterie";
 
   display.setPartialWindow(0, 0, display.width(), STATUS_AREA_HEIGH);
   display.firstPage();
@@ -194,9 +199,9 @@ void displayConditionsSection(int x, int y, int width, String IconName) {
 void displayToday(int leftOffset, int topOffset, int width, int height) {
   display.drawRect(leftOffset, topOffset, width, height, GxEPD_BLACK);
 
-  drawString(leftOffset + width / 2, topOffset + 17, dateTime.month, CENTER);
-  drawString(leftOffset + width / 2, topOffset + height - 5, dateTime.weekDay, CENTER);
-  drawString(leftOffset + width / 2, topOffset + height / 2 + 21, dateTime.date, CENTER, u8g2_font_fub42_tf);
+  drawString(leftOffset + width / 2, topOffset + 17, applicationState.month, CENTER);
+  drawString(leftOffset + width / 2, topOffset + height - 5, applicationState.weekDay, CENTER);
+  drawString(leftOffset + width / 2, topOffset + height / 2 + 21, applicationState.date, CENTER, u8g2_font_fub42_tf);
 }
 
 void displayWeather() {

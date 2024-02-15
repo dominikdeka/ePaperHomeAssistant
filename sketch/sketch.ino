@@ -1,8 +1,9 @@
-//TODOS - u8g2 - cleanup, section sizes in constants, read/draw refactor, use text width from drawString, fix mqtt structure, refactoring..., status, resign after x tries (show in status) + deep sleep (battery below some level)
+//TODOS - read/draw refactor, use text width from drawString, fix mqtt structure, refactoring...
 #define ENABLE_GxEPD2_GFX 0
-#define TIME_TO_SLEEP 1800       /* Time ESP32 will go to sleep (in seconds, max value 1800 = 30m) */
+#define TIME_TO_SLEEP 1800  /* Time ESP32 will go to sleep (in seconds, max value 1800 = 30m) */
 #define WAKEUP_SKIP 2 /* Skip every n wakups to save battery */ 
 #define MAX_ATTEMPTS 4 /* Give up after MAX_ATTEMPTS try to connect any service */ 
+#define MINIMAL_VOLTAGE 4.5 /* Below this voltage ESP goes deep sleep forever */ 
 #define GPIO_BIT_MASK ((1ULL << GPIO_NUM_32) | (1ULL << GPIO_NUM_35))
 
 #define STATUS_AREA_HEIGH 25 /* top partial window height (max: 480) */
@@ -36,7 +37,6 @@ U8G2_FOR_ADAFRUIT_GFX u8g2Fonts;
 ForecastRecord WxConditions[1];
 ForecastRecord WxForecast[max_readings];
 std::vector<CalendarData> calEvents;
-DateTime dateTime;
 
 //--------------------------------------
 // globals
@@ -92,12 +92,13 @@ void loop()
 
     display.init(false);
     u8g2Fonts.begin(display); // connect u8g2 procedures to Adafruit GFX
-    u8g2Fonts.setForegroundColor(GxEPD_BLACK);         // apply Adafruit GFX color
-    u8g2Fonts.setBackgroundColor(GxEPD_WHITE);         // apply Adafruit GFX color
+    u8g2Fonts.setForegroundColor(GxEPD_BLACK);
+    u8g2Fonts.setBackgroundColor(GxEPD_WHITE);
     nextPhase();
   }
-  if (applicationState.currentPhase == 1) { // reading time
+  if (applicationState.currentPhase == 1) { // reading time and battery voltage
     readDateTime();
+    readVoltage();
     nextPhase();
   }
   if (applicationState.currentPhase == 2) { // collecting mqtt data
@@ -144,14 +145,13 @@ void loop()
     deepSleep();
   }
 }
-float voltage() {
+void readVoltage() {
   int analogValue = analogRead(34);
   float analogVolts = (analogValue*3.3*2)/4096;
-  return analogVolts;
+  applicationState.voltage = analogVolts;
 }
 void changeViewMode(bool up = true){
   int secondsFromBoot = millis() / 1000;
-  applicationState.currentPhaseStart = secondsFromBoot;
   if (up) {
     applicationState.viewMode = (applicationState.viewMode + 1) % (sizeof(modes)/sizeof(String));
   } else {
@@ -198,14 +198,12 @@ void setStateOnWakeup() {
 
 void nextPhase() {
   setApplicationPhase(applicationState.currentPhase + 1);
-  applicationState.voltage = voltage();
   displayCurrentState();
 }
 
 void setApplicationPhase(byte phase) {
   int secondsFromBoot = millis() / 1000;
   applicationState.currentPhase = phase;
-  applicationState.currentPhaseStart = secondsFromBoot;
   Serial.print("change phase: ");
   Serial.println(applicationState.currentPhase);
 }
@@ -223,7 +221,9 @@ boolean mqttDataCollected() {
 
 void deepSleep() {
   int uS_TO_S_FACTOR = 1000000;
-  esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);
+  if (applicationState.voltage > MINIMAL_VOLTAGE) { // otherwise sleep forever
+    esp_sleep_enable_timer_wakeup(TIME_TO_SLEEP * uS_TO_S_FACTOR);
+  }
   esp_sleep_enable_ext0_wakeup(GPIO_NUM_33,0);
   pinMode(GPIO_NUM_33, INPUT_PULLUP);
 
@@ -290,14 +290,13 @@ boolean readDateTime(){
     return false;
   }
 
-  dateTime.month = month_M[timeinfo.tm_mon];
-  dateTime.weekDay = weekday_D[timeinfo.tm_wday];
-  dateTime.date = String(timeinfo.tm_mday);
+  applicationState.month = month_M[timeinfo.tm_mon];
+  applicationState.weekDay = weekday_D[timeinfo.tm_wday];
+  applicationState.date = String(timeinfo.tm_mday);
   char time_output[30], update_time[30];
   strftime(update_time, sizeof(update_time), "%H:%M:%S", &timeinfo);  // Creates: '14:05:49'
   sprintf(time_output, "%s %s", TXT_UPDATED, update_time);
-  dateTime.lastUpdate = time_output;
-  phases[6] = dateTime.lastUpdate; //TODO: setFinalStatus?
+  applicationState.lastUpdate = time_output;
   return true;
 }
 void readCalendarEvents(void)
