@@ -1,8 +1,6 @@
 #ifndef STRUCTURES_H_
 #define STRUCTURES_H_
 
-#include <Arduino.h>
-
 typedef struct {
   byte wakeupCount;
   byte currentPhase;

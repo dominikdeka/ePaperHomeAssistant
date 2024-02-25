@@ -1,3 +1,8 @@
+#define autoscale_on  true
+#define autoscale_off false
+#define barchart_on   true
+#define barchart_off  false
+
 float temperature_readings[max_readings] = {0};
 float rain_readings[max_readings]        = {0};
 float snow_readings[max_readings]        = {0};
@@ -43,11 +48,8 @@ void displayCurrentState() {
       u8g2Fonts.setForegroundColor(GxEPD_BLACK);
       u8g2Fonts.setBackgroundColor(GxEPD_WHITE);
     }
-    uint16_t batW = u8g2Fonts.getUTF8Width(batteryMsg.c_str());
-    uint16_t phaseW = u8g2Fonts.getUTF8Width(phaseMsg.c_str());
-
+    uint16_t phaseW = drawString(0, 20, phaseMsg, LEFT, u8g2_font_helvB14_te);
     drawString((display.width() - accumulatedWidth + phaseW)/2, 20, batteryMsg, CENTER, u8g2_font_helvB14_te);
-    drawString(0, 20, phaseMsg, LEFT, u8g2_font_helvB14_te);
   }
   while (display.nextPage());
 
@@ -152,12 +154,12 @@ void displayForecastSection(int x, int y, int width) {
   int gx = (width - gwidth * 2) / 3 + 5;
   int gy = y + 100;
   int gap = gwidth + gx;
-  drawGraph(x + gx + 0 * gap, gy, gwidth, gheight, 10, 30,    Units == "M" ? TXT_TEMPERATURE_C : TXT_TEMPERATURE_F, temperature_readings, max_readings, true, false);
+  drawGraph(x + gx + 0 * gap, gy, gwidth, gheight, 10, 30,    Units == "M" ? TXT_TEMPERATURE_C : TXT_TEMPERATURE_F, temperature_readings, max_readings, true, barchart_off);
   const int Rain_array_size = sizeof(rain_readings) / sizeof(float);
   const int Snow_array_size = sizeof(snow_readings) / sizeof(float);
   if (SumOfPrecip(rain_readings, Rain_array_size) >= SumOfPrecip(snow_readings, Snow_array_size))
-    drawGraph(x + gx + 1 * gap + 5, gy, gwidth, gheight, 0, 30, Units == "M" ? TXT_RAINFALL_MM : TXT_RAINFALL_IN, rain_readings, Rain_array_size, true, true);
-  else drawGraph(x + gx + 1 * gap + 5, gy, gwidth, gheight, 0, 30, Units == "M" ? TXT_SNOWFALL_MM : TXT_SNOWFALL_IN, snow_readings, Snow_array_size, true, true);
+    drawGraph(x + gx + 1 * gap + 5, gy, gwidth, gheight, 0, 30, Units == "M" ? TXT_RAINFALL_MM : TXT_RAINFALL_IN, rain_readings, Rain_array_size, autoscale_on, barchart_on);
+  else drawGraph(x + gx + 1 * gap + 5, gy, gwidth, gheight, 0, 30, Units == "M" ? TXT_SNOWFALL_MM : TXT_SNOWFALL_IN, snow_readings, Snow_array_size, autoscale_on, barchart_on);
 }
 //#########################################################################################
 void displayConditionsSection(int x, int y, int width, String IconName) {

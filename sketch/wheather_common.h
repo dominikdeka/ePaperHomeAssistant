@@ -1,10 +1,6 @@
 #ifndef COMMON_H_
 #define COMMON_H_
 
-#include <Arduino.h>
-#include <ArduinoJson.h>
-#include <HTTPClient.h>
-
 #include "wheather_common_functions.h"
 
 //#########################################################################################
