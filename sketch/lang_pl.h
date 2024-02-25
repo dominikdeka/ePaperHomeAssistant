@@ -1,5 +1,3 @@
-#define FONT(x) x##_tf
-
 //Temperature - Humidity - Forecast
 const String TXT_FORECAST_VALUES  = "Prognoza 3-dniowa";
 const String TXT_FORECAST  = "Prognoza";
@@ -44,7 +42,9 @@ const String TXT_MOON_WANING_CRESCENT = "Ubywający sierp ";
 //Power / WiFi
 const String TXT_POWER  = "Zasilanie";
 const String TXT_WIFI   = "WiFi";
-const char* TXT_UPDATED = "Aktualizacja:";
+const String TXT_VOLTAGE   = "bateria: ";
+const String TXT_CHARGE_BATTERY   = "naladuj baterie!";
+const char* TXT_UPDATED = "aktualizacja:";
 
 
 //Wind

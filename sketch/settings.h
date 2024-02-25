@@ -6,7 +6,6 @@ String Country          = "PL";                            // Your _ISO-3166-1_t
 String Language         = "PL";                            // NOTE: Only the weather description is translated by OWM
                                                            // Examples: Arabic (AR) Czech (CZ) English (EN) Greek (EL) Persian(Farsi) (FA) Galician (GL) Hungarian (HU) Japanese (JA)
                                                            // Korean (KR) Latvian (LA) Lithuanian (LT) Macedonian (MK) Slovak (SK) Slovenian (SL) Vietnamese (VI)
-String Hemisphere       = "north";                         // or "south"  
 String Units            = "M";                             // Use 'M' for Metric or I for Imperial 
 // const char* Timezone    = "GMT0BST,M3.5.0/01,M10.5.0/02";  // Choose your time zone from: https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv 
                                                            // See below for examples
@@ -19,9 +18,6 @@ int   gmtOffset_sec     = 0;    // UK normal time is GMT, so GMT Offset is 0, fo
 int  daylightOffset_sec = 3600; // In the UK DST is +1hr or 3600-secs, other countries may use 2hrs 7200 or 30-mins 1800 or 5.5hrs 19800 Ahead of GMT use + offset behind - offset
 
 const char* Timezone = "CET-1CEST,M3.5.0,M10.5.0/3";       // Central Europe
-
-#define SCREEN_WIDTH  800             // Set for landscape mode
-#define SCREEN_HEIGHT 480
 
 enum alignment {LEFT, RIGHT, CENTER};
 
