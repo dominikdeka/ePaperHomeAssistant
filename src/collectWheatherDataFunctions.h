@@ -1,18 +1,23 @@
-#ifndef COMMON_H_
-#define COMMON_H_
+float mmToInches(float value_mm)
+{
+  return 0.0393701 * value_mm;
+}
 
-#include "wheather_common_functions.h"
+float hPaToInHg(float value_hPa)
+{
+  return 0.02953 * value_hPa;
+}
 
 //#########################################################################################
-void Convert_Readings_to_Imperial() {
-  WxConditions[0].Pressure = hPa_to_inHg(WxConditions[0].Pressure);
-  WxForecast[1].Rainfall   = mm_to_inches(WxForecast[1].Rainfall);
-  WxForecast[1].Snowfall   = mm_to_inches(WxForecast[1].Snowfall);
+void convertReadingsToImperial() {
+  WxConditions[0].Pressure = hPaToInHg(WxConditions[0].Pressure);
+  WxForecast[1].Rainfall   = mmToInches(WxForecast[1].Rainfall);
+  WxForecast[1].Snowfall   = mmToInches(WxForecast[1].Snowfall);
 }
 
 //#########################################################################################
 // Problems with stucturing JSON decodes, see here: https://arduinojson.org/assistant/
-bool DecodeWeather(WiFiClient& json, String Type) {
+bool decodeWeather(WiFiClient& json, String Type) {
   Serial.print(F("\nCreating object...and "));
   // allocate the JsonDocument
   DynamicJsonDocument doc(35 * 1024);
@@ -82,12 +87,12 @@ bool DecodeWeather(WiFiClient& json, String Type) {
     if (pressure_trend < 0)  WxConditions[0].Trend = "-";
     if (pressure_trend == 0) WxConditions[0].Trend = "0";
 
-    if (Units == "I") Convert_Readings_to_Imperial();
+    if (Units == "I") convertReadingsToImperial();
   }
   return true;
 }
 //#########################################################################################
-String ConvertUnixTime(int unix_time) {
+String convertUnixTime(int unix_time) {
   // Returns either '21:12  ' or ' 09:12pm' depending on Units mode
   time_t tm = unix_time;
   struct tm *now_tm = gmtime(&tm);
@@ -101,32 +106,3 @@ String ConvertUnixTime(int unix_time) {
   return output;
 }
 //#########################################################################################
-bool obtain_wx_data(WiFiClient& client, const String& RequestType) {
-  const String units = (Units == "M" ? "metric" : "imperial");
-  client.stop(); // close connection before sending a new request
-  HTTPClient http;
-  String uri = "/data/2.5/" + RequestType + "?q=" + City + "," + Country + "&APPID=" + apikey + "&mode=json&units=" + units + "&lang=" + Language;
-  if(RequestType != "weather")
-  {
-    uri += "&cnt=" + String(max_readings);
-  }
-  //http.begin(uri,test_root_ca); //HTTPS example connection
-  http.begin(client, server, 80, uri);
-  int httpCode = http.GET();
-  if(httpCode == HTTP_CODE_OK) {
-    if (!DecodeWeather(http.getStream(), RequestType)) return false;
-    client.stop();
-    http.end();
-    return true;
-  }
-  else
-  {
-    Serial.printf("connection failed, error: %s", http.errorToString(httpCode).c_str());
-    client.stop();
-    http.end();
-    return false;
-  }
-  http.end();
-  return true;
-}
-#endif /* ifndef COMMON_H_ */

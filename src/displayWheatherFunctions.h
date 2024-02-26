@@ -1,3 +1,5 @@
+void drawGraph(int x_pos, int y_pos, int gwidth, int gheight, float Y1Min, float Y1Max, String title, float DataArray[], int readings, boolean auto_scale, boolean barchart_mode);
+void displayForecastWeather(int x, int y, int index, int width);
 void displayWheatherIcon(int x, int y, String IconName, bool IconSize);
 
 void addcloud(int x, int y, int scale, int linesize);
@@ -23,13 +25,90 @@ void Haze(int x, int y, bool IconSize, String IconName);
 void CloudCover(int x, int y, int CCover);
 void Visibility(int x, int y, String Visi);
 void Nodata(int x, int y, bool IconSize, String IconName);
-uint16_t drawString(int x, int y, String text, alignment align, const uint8_t *fontName = u8g2_font_helvB12_tf);
-int drawEventsDay(String date, int col1W, std::vector<String> events, int col2W);
-int wrapText(const char* text, int x, int y, int maxWidth);
+float SumOfPrecip(float DataArray[], int readings);
+
 
 boolean LargeIcon = true, SmallIcon = false;
 #define Large  17           // For icon drawing, needs to be odd number for best effect
 #define Small  6            // For icon drawing, needs to be odd number for best effect
+
+void drawGraph(int x_pos, int y_pos, int gwidth, int gheight, float Y1Min, float Y1Max, String title, float DataArray[], int readings, boolean auto_scale, boolean barchart_mode) {
+#define auto_scale_margin 0 // Sets the autoscale increment, so axis steps up in units of e.g. 3
+#define y_minor_axis 5      // 5 y-axis division markers
+  float maxYscale = -10000;
+  float minYscale =  10000;
+  int last_x, last_y;
+  float x2, y2;
+  if (auto_scale == true) {
+    for (int i = 1; i < readings; i++ ) {
+      if (DataArray[i] >= maxYscale) maxYscale = DataArray[i];
+      if (DataArray[i] <= minYscale) minYscale = DataArray[i];
+    }
+    maxYscale = round(maxYscale + auto_scale_margin); // Auto scale the graph and round to the nearest value defined, default was Y1Max
+    Y1Max = round(maxYscale + 0.5);
+    if (minYscale != 0) minYscale = round(minYscale - auto_scale_margin); // Auto scale the graph and round to the nearest value defined, default was Y1Min
+    Y1Min = round(minYscale);
+  }
+  // Draw the graph
+  last_x = x_pos;
+  last_y = y_pos + (Y1Max - constrain(DataArray[1], Y1Min, Y1Max)) / (Y1Max - Y1Min) * gheight;
+  display.drawRect(x_pos, y_pos, gwidth + 3, gheight + 2, GxEPD_BLACK);
+  drawString(x_pos + gwidth / 2, y_pos - 2, title, CENTER);
+
+  // Draw the data
+  for (int gx = 0; gx < readings; gx++) {
+    y2 = y_pos + (Y1Max - constrain(DataArray[gx], Y1Min, Y1Max)) / (Y1Max - Y1Min) * gheight + 1;
+    if (barchart_mode) {
+      x2 = x_pos + gx * (gwidth / readings) + 2;
+      display.fillRect(x2, y2, (gwidth / readings) - 2, y_pos + gheight - y2 + 2, GxEPD_BLACK);
+    } 
+    else
+    {
+      x2 = x_pos + gx * gwidth / (readings - 1) + 1; // max_readings is the global variable that sets the maximum data that can be plotted
+      display.drawLine(last_x, last_y, x2, y2, GxEPD_BLACK);
+    }
+    last_x = x2;
+    last_y = y2;
+  }
+  //Draw the Y-axis scale
+#define number_of_dashes 20
+  for (int spacing = 0; spacing <= y_minor_axis; spacing++) {
+    for (int j = 0; j < number_of_dashes; j++) { // Draw dashed graph grid lines
+      if (spacing < y_minor_axis) display.drawFastHLine((x_pos + 3 + j * gwidth / number_of_dashes), y_pos + (gheight * spacing / y_minor_axis), gwidth / (2 * number_of_dashes), GxEPD_BLACK);
+    }
+    if ((Y1Max - (float)(Y1Max - Y1Min) / y_minor_axis * spacing) < 5 || title == TXT_PRESSURE_IN) {
+      drawString(x_pos - 4, y_pos + gheight * spacing / y_minor_axis + 5, String((Y1Max - (float)(Y1Max - Y1Min) / y_minor_axis * spacing + 0.01), 1), RIGHT);
+    }
+    else
+    {
+      if (Y1Min < 1 && Y1Max < 10)
+        drawString(x_pos - 4, y_pos + gheight * spacing / y_minor_axis + 7, String((Y1Max - (float)(Y1Max - Y1Min) / y_minor_axis * spacing + 0.01), 1), RIGHT);
+      else
+        drawString(x_pos - 4, y_pos + gheight * spacing / y_minor_axis + 7, String((Y1Max - (float)(Y1Max - Y1Min) / y_minor_axis * spacing + 0.01), 0), RIGHT);
+    }
+  }
+
+  String lastDate = String(WxForecast[0].Period.substring(0,10));
+  int day1X, day2X, day3X;
+  for (int gx = 0; gx < readings; gx++) {
+    if(String(WxForecast[gx].Period.substring(0,10)) != lastDate) {
+      lastDate = String(WxForecast[gx].Period.substring(0,10));
+      x2 = x_pos + gx * (gwidth / readings) + 2;
+      drawString(x2, y_pos + gheight + 13, "|", LEFT);
+    }
+  }
+}
+
+void displayForecastWeather(int x, int y, int index, int width) {
+  int fwidth = 73;
+  int offset = (width - fwidth * 5) / 2;
+  x = offset + x + fwidth * index;
+  display.drawRect(x, y, fwidth - 1, 81, GxEPD_BLACK);
+  display.drawLine(x, y + 17, x + fwidth - 3, y + 17, GxEPD_BLACK);
+  displayWheatherIcon(x + fwidth / 2, y + 43, WxForecast[index].Icon, SmallIcon);
+  drawString(x + fwidth / 2, y + 14, String(convertUnixTime(WxForecast[index].Dt + WxConditions[0].Timezone).substring(0,5)), CENTER);
+  drawString(x + fwidth / 2, y + 79, String(WxForecast[index].High, 0) + "°/" + String(WxForecast[index].Low, 0) + "°", CENTER);
+}
 
 //#########################################################################################
 // Symbols are drawn on a relative 10x10grid and 1 scale unit = 1 drawing unit
@@ -310,70 +389,11 @@ void Visibility(int x, int y, String Visi) {
 void Nodata(int x, int y, bool IconSize, String IconName) {
   drawString(x - 3, y - 10, "?", CENTER);
 }
-//#########################################################################################
-uint16_t drawString(int x, int y, String text, alignment align, const uint8_t *fontName) {
-  u8g2Fonts.setFont(fontName);
-  uint16_t width = u8g2Fonts.getUTF8Width(text.c_str());
-  if (align == RIGHT)  x = x - width;
-  if (align == CENTER) x = x - width / 2;
-  u8g2Fonts.setCursor(x, y);
-  u8g2Fonts.print(text);
-  return width;
-}
 
-int drawEventsDay(int currentHeight, int maxTableHeight, String date, int col1W, std::vector<String> events, int col2W) {
-    u8g2Fonts.setFont(u8g2_font_helvB14_te);
-    int16_t ta = u8g2Fonts.getFontAscent(); // positive
-    int16_t td = u8g2Fonts.getFontDescent(); // negative; in mathematicians view
-    int dateHeight = ta - td; // text box height
-    u8g2Fonts.setCursor(0, currentHeight + dateHeight);
-    u8g2Fonts.print(date);
-
-    u8g2Fonts.setFont(u8g2_font_luRS18_tf);
-    byte eventsNumber = events.size();
-    // int16_t newHeight = currentHeight + eventsNumber * lineHeight;
-    // if (newHeight > maxTableHeight) {
-    //   return 0;
-    // }
-    ta = u8g2Fonts.getFontAscent(); // positive
-    td = u8g2Fonts.getFontDescent(); // negative; in mathematicians view
-    int16_t lineHeight = ta - td; // text box height
-
-    int eventsHeight = 0;
-    for(byte j = 0; j < eventsNumber; j++) {
-      eventsHeight += wrapText(events[j].c_str(), col1W + 5, currentHeight + eventsHeight, col2W);
-      if (currentHeight + eventsHeight + lineHeight > maxTableHeight) {
-        return 0;
-      }
-    }
-    return currentHeight + eventsHeight;
-}
-int wrapText(const char* text, int x, int y, int maxWidth) {
-  int16_t ta = u8g2Fonts.getFontAscent(); // positive
-  int16_t td = u8g2Fonts.getFontDescent(); // negative; in mathematicians view
-  int16_t lineHeight = ta - td; // text box height
-
-  uint8_t length = strlen(text);
-  char buffer[length + 1];
-  strcpy(buffer, text);
-
-  char* token = strtok(buffer, " ");
-  int16_t currentWidth = 0;
-  int lines = 1;
-  u8g2Fonts.setCursor(x, y + lines * lineHeight);
-  while (token != NULL) {
-    int16_t tokenWidth = u8g2Fonts.getUTF8Width(token);
-    // Serial.println(token);
-    // Serial.println(tokenWidth);
-    if (currentWidth + tokenWidth > maxWidth) {
-      currentWidth = 0;
-      lines++;
-      u8g2Fonts.setCursor(x, y + lines * lineHeight);
-    }
-    u8g2Fonts.print(token);
-    u8g2Fonts.print(" ");
-    currentWidth += tokenWidth + u8g2Fonts.getUTF8Width(" ");
-    token = strtok(NULL, " ");
+float SumOfPrecip(float DataArray[], int readings) {
+  float sum = 0;
+  for (int i = 0; i < readings; i++) {
+    sum += DataArray[i];
   }
-  return lines * lineHeight;
+  return sum;
 }
