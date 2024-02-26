@@ -101,8 +101,6 @@ String ConvertUnixTime(int unix_time) {
   return output;
 }
 //#########################################################################################
-//WiFiClient client; // wifi client object
-
 bool obtain_wx_data(WiFiClient& client, const String& RequestType) {
   const String units = (Units == "M" ? "metric" : "imperial");
   client.stop(); // close connection before sending a new request
