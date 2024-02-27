@@ -1,10 +1,12 @@
 #include "displayCommonFunctions.h"
 #include "displayWheatherFunctions.h"
+#include "images.h"
 
 void displayCurrentState();
 void displayWheather();
 void displayCalendarData();
 
+void displayMqttReadings(int leftOffset, int topOffset, int width, int height);
 void displayForecastSection(int x, int y, int w);
 void displayConditionsSection(int x, int y, int width, String IconName);
 void displayToday(int leftOffset, int topOffset, int width, int height);
@@ -12,9 +14,10 @@ void displayToday(int leftOffset, int topOffset, int width, int height);
 void displayCurrentState() {
   byte modesNo = sizeof(modes) / sizeof(String);
 
-  String phaseMsg = applicationState.currentPhase < 6
+  String statusMsg = applicationState.currentPhase < 6
     ? phases[applicationState.currentPhase]
     : applicationState.lastUpdate;
+
   String batteryMsg = applicationState.voltage > MINIMAL_VOLTAGE  
     ? TXT_VOLTAGE + String(applicationState.voltage) + 'V'
     : TXT_CHARGE_BATTERY;
@@ -36,13 +39,13 @@ void displayCurrentState() {
         display.fillRect(x, 0, w + 10, STATUS_AREA_HEIGH, GxEPD_BLACK);
       }
 
-      drawString(x + 5, 20, modes[i], LEFT, u8g2_font_helvB14_te);
+      drawString(x + 5, 20, modes[i], "left", u8g2_font_helvB14_te);
 
       u8g2Fonts.setForegroundColor(GxEPD_BLACK);
       u8g2Fonts.setBackgroundColor(GxEPD_WHITE);
     }
-    uint16_t phaseW = drawString(0, 20, phaseMsg, LEFT, u8g2_font_helvB14_te);
-    drawString((display.width() - accumulatedWidth + phaseW)/2, 20, batteryMsg, CENTER, u8g2_font_helvB14_te);
+    uint16_t phaseW = drawString(5, 20, statusMsg, "left", u8g2_font_helvB14_te) + 5;
+    drawString((display.width() - accumulatedWidth + phaseW)/2, 20, batteryMsg, "center", u8g2_font_helvB14_te);
   }
   while (display.nextPage());
 
@@ -51,35 +54,17 @@ void displayCurrentState() {
 void displayWheather() {
   const int leftOffset = CALENDAR_AREA_WIDTH;
   const int topOffset = STATUS_AREA_HEIGH + 10;
-  const byte padding = 5;
-
-  int tableWidth = 200; 
-  int tableHeight = 140; 
-  int tableLeftOffset = display.width() - tableWidth;
-  int todayWitdth = display.width() - tableWidth - leftOffset - 5;
-  display.setPartialWindow(leftOffset, topOffset, display.width() - leftOffset, display.height()- topOffset);
+  const int imageHeight = 140;
+  display.setPartialWindow(leftOffset, topOffset, display.width() - leftOffset, display.height() - topOffset);
   display.firstPage();
   u8g2Fonts.setFont(u8g2_font_helvB12_tf);
   do
   {
-    display.drawBitmap(display.width() - 200, topOffset, home, 200, 140, GxEPD_BLACK);
-    u8g2Fonts.setCursor(tableLeftOffset + 61, topOffset + 28);
-    u8g2Fonts.print(mqttTopics[5].tempValue + "°");
-    u8g2Fonts.setCursor(tableLeftOffset + 61, topOffset + 63);
-    u8g2Fonts.print(mqttTopics[4].tempValue + "°");
-    u8g2Fonts.setCursor(tableLeftOffset + 61, topOffset + 98);
-    u8g2Fonts.print(mqttTopics[3].tempValue + "°");
-    u8g2Fonts.setCursor(tableLeftOffset + 61, topOffset + 133);
-    u8g2Fonts.print(mqttTopics[1].tempValue + "°");
-    u8g2Fonts.setCursor(tableLeftOffset + 130, topOffset + 133);
-    u8g2Fonts.print(mqttTopics[0].tempValue + "°");
-    u8g2Fonts.setCursor(tableLeftOffset + 130, topOffset + 63);
-    u8g2Fonts.print(mqttTopics[2].tempValue + "°");
+    displayToday(leftOffset + 20, topOffset, 160, imageHeight);
+    displayMqttReadings(display.width() - 200, topOffset, 200, imageHeight);
 
-    displayConditionsSection(leftOffset, topOffset + tableHeight, display.width() - leftOffset, WxConditions[0].Icon);
-    displayForecastSection(leftOffset, topOffset + tableHeight + 120, display.width() - leftOffset);
-    displayToday(leftOffset, topOffset, todayWitdth, tableHeight);
-
+    displayConditionsSection(leftOffset, topOffset + imageHeight, display.width() - leftOffset, WxConditions[0].Icon);
+    displayForecastSection(leftOffset, topOffset + imageHeight + 120, display.width() - leftOffset);
   }
   while (display.nextPage());
 }
@@ -119,6 +104,16 @@ void displayCalendarData() {
     }
   }
   while (display.nextPage());
+}
+
+void displayMqttReadings(int leftOffset, int topOffset, int width, int height) {
+  display.drawBitmap(display.width() - 200, topOffset, home, width, height, GxEPD_BLACK);
+  drawString(leftOffset + 61, topOffset + 28, mqttTopics[5].value + "°"); //dominikdeka@gmail.com/temperature/bedroom
+  drawString(leftOffset + 61, topOffset + 63, mqttTopics[4].value + "°"); //dominikdeka@gmail.com/temperature/justyna
+  drawString(leftOffset + 61, topOffset + 98, mqttTopics[3].value + "°"); //dominikdeka@gmail.com/temperature/salon
+  drawString(leftOffset + 61, topOffset + 133, mqttTopics[1].value + "°"); //dominikdeka@gmail.com/temperature/loundry
+  drawString(leftOffset + 130, topOffset + 133, mqttTopics[0].value + "°"); //dominikdeka@gmail.com/temperature/taras
+  drawString(leftOffset + 130, topOffset + 63, mqttTopics[2].value + "°"); //dominikdeka@gmail.com/temperature/front
 }
 
 void displayForecastSection(int x, int y, int width) {
@@ -166,26 +161,26 @@ void displayConditionsSection(int x, int y, int width, String IconName) {
   String cloudCover = String(WxConditions[0].Cloudcover) + "%";
   String humidity = TXT_HUMIDITY + ": " + String(WxConditions[0].Humidity, 0) + "%";
   uint16_t tbh = 22;
-  drawString(iconCentreX + 20 + 5, iconCentreY, cloudCover + "  " + humidity, LEFT);
+  drawString(iconCentreX + 20 + 5, iconCentreY, cloudCover + "  " + humidity, "left");
 
   String temperature = TXT_TEMPERATURES + ": " + String(WxConditions[0].Temperature, 1) + "°C (" + String(WxConditions[0].High, 0) + "°|" + String(WxConditions[0].Low, 0) + "°)";
-  drawString(iconCentreX - 20, iconCentreY + tbh, temperature, LEFT);
+  drawString(iconCentreX - 20, iconCentreY + tbh, temperature, "left");
 
   String slope_direction = TXT_PRESSURE_STEADY;
   if (WxConditions[0].Trend == "+") slope_direction = TXT_PRESSURE_RISING;
   if (WxConditions[0].Trend == "-") slope_direction = TXT_PRESSURE_FALLING;
 
   String preasure = TXT_PRESSURE + ": " + String(WxConditions[0].Pressure, 0) + "hPa (" + slope_direction + ")";
-  drawString(iconCentreX - 20, iconCentreY + 2 * tbh, preasure, LEFT);
+  drawString(iconCentreX - 20, iconCentreY + 2 * tbh, preasure, "left");
 
   String sunrise = TXT_SUNRISE + ": " + convertUnixTime(WxConditions[0].Sunrise + WxConditions[0].Timezone).substring(0, 5) + " " + TXT_SUNSET + ": " + convertUnixTime(WxConditions[0].Sunset + WxConditions[0].Timezone).substring(0, 5);
-  drawString(iconCentreX - 20, iconCentreY + 3 * tbh, sunrise, LEFT);
+  drawString(iconCentreX - 20, iconCentreY + 3 * tbh, sunrise, "left");
 }
 
 void displayToday(int leftOffset, int topOffset, int width, int height) {
   display.drawRect(leftOffset, topOffset, width, height, GxEPD_BLACK);
 
-  drawString(leftOffset + width / 2, topOffset + 17, applicationState.month, CENTER);
-  drawString(leftOffset + width / 2, topOffset + height - 5, applicationState.weekDay, CENTER);
-  drawString(leftOffset + width / 2, topOffset + height / 2 + 21, applicationState.date, CENTER, u8g2_font_fub42_tf);
+  drawString(leftOffset + width / 2, topOffset + 17, applicationState.month, "center");
+  drawString(leftOffset + width / 2, topOffset + height - 5, applicationState.weekDay, "center");
+  drawString(leftOffset + width / 2, topOffset + height / 2 + 21, applicationState.date, "center", u8g2_font_fub42_tf);
 }

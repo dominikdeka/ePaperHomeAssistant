@@ -1,4 +1,4 @@
-//TODOS - fix mqtt structure, refactore settings...
+//TODOS - lastUpdate - date only, refactore settings, fonts in i18n...
 #define ENABLE_GxEPD2_GFX 0
 #define TIME_TO_SLEEP 1800  /* Time ESP32 will go to sleep (in seconds, max value 1800 = 30m) */
 #define WAKEUP_SKIP 2 /* Skip every n wakups to save battery */ 
@@ -6,19 +6,18 @@
 #define MINIMAL_VOLTAGE 4.5 /* Below this voltage ESP goes deep sleep forever */ 
 #define GPIO_BIT_MASK ((1ULL << GPIO_NUM_32) | (1ULL << GPIO_NUM_35))
 
-#define STATUS_AREA_HEIGH 25 /* top partial window height (max: 480) */
-#define CALENDAR_AREA_WIDTH 420 /* left bottom partial window width (max: 800) */
-
+#define STATUS_AREA_HEIGH 25 /* top (status) section height (max: 480) */
+#define CALENDAR_AREA_WIDTH 400 /* left bottom (calendar) section width (max: 800) */
 
 #include "src/credentials.h"
 #include "src/settings.h"
-#include "src/i18n/pl.h"                  // Localisation (Polish)
-#include "src/images.h"
+#include "src/i18n/pl.h"
+#include "src/structures.h"
 
 #include <GxEPD2_BW.h> // v1.5.3
 #include <U8g2_for_Adafruit_GFX.h> // v1.8.0
 
-// select the display class and display driver class in the following file (new style):
+// select the display class and display driver class
 #include "src/setupHardware.h"
 
 #include <WiFi.h> // Built-in
@@ -32,26 +31,14 @@
 U8G2_FOR_ADAFRUIT_GFX u8g2Fonts;
 
 // global variables
-#include "src/structures.h"
 #define max_readings 24
 ForecastRecord WxConditions[1];
 ForecastRecord WxForecast[max_readings];
+
 std::vector<CalendarData> calEvents;
+std::vector<MqttData> mqttTopics;
 
-//--------------------------------------
-// globals
-//--------------------------------------
-
-MqttTopic mqttTopics[6] = {
-  {"dominikdeka@gmail.com/temperature/taras", "dominikdeka@gmail.com/hummidity/taras", "piwnica", "", ""},
-  {"dominikdeka@gmail.com/temperature/loundry", "dominikdeka@gmail.com/hummidity/loundry", "pralnia", "", ""},
-  {"dominikdeka@gmail.com/temperature/front", "dominikdeka@gmail.com/hummidity/front", "zewnetrzna", "", ""},
-  {"dominikdeka@gmail.com/temperature/salon", "dominikdeka@gmail.com/hummidity/salon", "parter", "", ""},
-  {"dominikdeka@gmail.com/temperature/justyna", "dominikdeka@gmail.com/hummidity/justyna", "pietro", "", ""},
-  {"dominikdeka@gmail.com/temperature/bedroom", "dominikdeka@gmail.com/hummidity/bedroom", "poddasze", "", ""},
-};
-
-RTC_DATA_ATTR ApplicationState applicationState = {0, 0, 0, 0};
+RTC_DATA_ATTR ApplicationState applicationState = {0, 0, 0};
 
 #include "src/collectData.h"
 #include "src/displayMainSections.h"
@@ -59,28 +46,24 @@ RTC_DATA_ATTR ApplicationState applicationState = {0, 0, 0, 0};
 WiFiClient wifiClient;
 PubSubClient mqttClient(wifiClient);
 
-void setup()
-{
+void setup() {
   Serial.begin(115200);
-  while(!Serial){delay(100);}
+  while(!Serial) { delay(100); }
 
   setStateOnWakeup();
   delay(500);
 
   //setup mqtt
-  mqttClient.setServer(mqtt_server, mqtt_server_port);
-  mqttClient.setCallback(mqttCallback);
+  mqttInit();
 
   if (connectWiFi() == true) {
     setApplicationPhase(0);
   } else {
-    phases[6] = "WiFi connection failed";
-    setApplicationPhase(6);
+    setApplicationPhase(6); // leave display unchanged and go sleep
   }
 }
 
-void loop()
-{
+void loop() {
   if (applicationState.currentPhase == 0) { // initialize ePaper
     // *** special handling for Waveshare ESP32 Driver board *** //
     // ********************************************************* //
@@ -107,7 +90,7 @@ void loop()
       Attempts++;
     }
     mqttClient.loop();
-    if(mqttDataCollected() || Attempts > MAX_ATTEMPTS){
+    if(mqttDataCollected() || Attempts > MAX_ATTEMPTS) {
       nextPhase();
     }
   }
@@ -144,7 +127,7 @@ void loop()
     deepSleep();
   }
 }
-void changeViewMode(bool up = true){
+void changeViewMode(bool up = true) {
   int secondsFromBoot = millis() / 1000;
   if (up) {
     applicationState.viewMode = (applicationState.viewMode + 1) % (sizeof(modes)/sizeof(String));
@@ -257,17 +240,27 @@ void StopWiFi() {
   WiFi.mode(WIFI_OFF);
 }
 
+void mqttInit() {
+  mqttClient.setServer(mqtt_server, mqtt_server_port);
+  mqttClient.setCallback(mqttCallback);
+  for(byte i = 0; i < sizeof(mqttTopicNames) / sizeof(String); i++) {
+    MqttData topic;
+    topic.topic = mqttTopicNames[i];
+    topic.value = "";
+    mqttTopics.push_back(topic);
+  }
+}
+
 void mqttReconnect() {
+  byte topicsNumber = sizeof(mqttTopicNames) / sizeof(String);
   // Loop until we're reconnected
-  byte topicsNumber = sizeof(mqttTopics) / sizeof(MqttTopic);
   while (!mqttClient.connected()) {
     Serial.print("Attempting MQTT connection...");
     // Attempt to connect
     if (mqttClient.connect(mqttClientId, mqttUser, mqttPassword)) {      
       Serial.println("connected");
       for(byte i = 0; i < topicsNumber; i++) {
-        mqttClient.subscribe(mqttTopics[i].tempName.c_str());
-        mqttClient.subscribe(mqttTopics[i].humName.c_str());
+        mqttClient.subscribe(mqttTopicNames[i].c_str());
       }
     } else {
       Serial.print("failed, rc=");

@@ -8,8 +8,9 @@ void readVoltage() {
 
 boolean mqttDataCollected() {
   boolean collected = true;
-  for(unsigned i = 0; i < sizeof(mqttTopics) / sizeof(MqttTopic); i++) {
-    if ((mqttTopics[i].tempValue == "") || (mqttTopics[i].humValue == "")) {
+  byte topicsNumber = mqttTopics.size();
+  for(unsigned i = 0; i < topicsNumber; i++) {
+    if (mqttTopics[i].value == "") {
       collected = false;
       break;
     }
@@ -27,18 +28,14 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
     tmp[i] = (char)payload[i];
   }
   tmp[length] = 0;
-
-  for(unsigned i = 0; i < sizeof(mqttTopics) / sizeof(MqttTopic); i++) {
-    if (mqttTopics[i].tempName == topic) {
-      mqttTopics[i].tempValue = tmp;
-    }
-    if (mqttTopics[i].humName == topic) {
-      mqttTopics[i].humValue = tmp;
+  byte topicsNumber = mqttTopics.size();
+  for(unsigned i = 0; i < topicsNumber; i++) {
+    if (mqttTopics[i].topic == topic) {
+      mqttTopics[i].value = tmp;
     }
   }
-  // String myCurrentTime = timeClient.getFormattedTime();
-  // mqttClient.publish(mqttTopicOut,("ESP8266: Cedalo Mosquitto is awesome. ESP8266-Time: " + myCurrentTime).c_str());
 }
+
 boolean readDateTime(){
   configTime(gmtOffset_sec, daylightOffset_sec, ntpServer, "time.nist.gov"); //(gmtOffset_sec, daylightOffset_sec, ntpServer)
   setenv("TZ", Timezone, 1);  //setenv()adds the "TZ" variable to the environment with a value TimeZone, only used if set to 1, 0 means no change

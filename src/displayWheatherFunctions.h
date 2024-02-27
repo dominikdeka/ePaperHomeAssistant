@@ -53,7 +53,7 @@ void drawGraph(int x_pos, int y_pos, int gwidth, int gheight, float Y1Min, float
   last_x = x_pos;
   last_y = y_pos + (Y1Max - constrain(DataArray[1], Y1Min, Y1Max)) / (Y1Max - Y1Min) * gheight;
   display.drawRect(x_pos, y_pos, gwidth + 3, gheight + 2, GxEPD_BLACK);
-  drawString(x_pos + gwidth / 2, y_pos - 2, title, CENTER);
+  drawString(x_pos + gwidth / 2, y_pos - 2, title, "center");
 
   // Draw the data
   for (int gx = 0; gx < readings; gx++) {
@@ -77,14 +77,14 @@ void drawGraph(int x_pos, int y_pos, int gwidth, int gheight, float Y1Min, float
       if (spacing < y_minor_axis) display.drawFastHLine((x_pos + 3 + j * gwidth / number_of_dashes), y_pos + (gheight * spacing / y_minor_axis), gwidth / (2 * number_of_dashes), GxEPD_BLACK);
     }
     if ((Y1Max - (float)(Y1Max - Y1Min) / y_minor_axis * spacing) < 5 || title == TXT_PRESSURE_IN) {
-      drawString(x_pos - 4, y_pos + gheight * spacing / y_minor_axis + 5, String((Y1Max - (float)(Y1Max - Y1Min) / y_minor_axis * spacing + 0.01), 1), RIGHT);
+      drawString(x_pos - 4, y_pos + gheight * spacing / y_minor_axis + 5, String((Y1Max - (float)(Y1Max - Y1Min) / y_minor_axis * spacing + 0.01), 1), "right");
     }
     else
     {
       if (Y1Min < 1 && Y1Max < 10)
-        drawString(x_pos - 4, y_pos + gheight * spacing / y_minor_axis + 7, String((Y1Max - (float)(Y1Max - Y1Min) / y_minor_axis * spacing + 0.01), 1), RIGHT);
+        drawString(x_pos - 4, y_pos + gheight * spacing / y_minor_axis + 7, String((Y1Max - (float)(Y1Max - Y1Min) / y_minor_axis * spacing + 0.01), 1), "right");
       else
-        drawString(x_pos - 4, y_pos + gheight * spacing / y_minor_axis + 7, String((Y1Max - (float)(Y1Max - Y1Min) / y_minor_axis * spacing + 0.01), 0), RIGHT);
+        drawString(x_pos - 4, y_pos + gheight * spacing / y_minor_axis + 7, String((Y1Max - (float)(Y1Max - Y1Min) / y_minor_axis * spacing + 0.01), 0), "right");
     }
   }
 
@@ -94,7 +94,7 @@ void drawGraph(int x_pos, int y_pos, int gwidth, int gheight, float Y1Min, float
     if(String(WxForecast[gx].Period.substring(0,10)) != lastDate) {
       lastDate = String(WxForecast[gx].Period.substring(0,10));
       x2 = x_pos + gx * (gwidth / readings) + 2;
-      drawString(x2, y_pos + gheight + 13, "|", LEFT);
+      drawString(x2, y_pos + gheight + 13, "|", "left");
     }
   }
 }
@@ -106,8 +106,8 @@ void displayForecastWeather(int x, int y, int index, int width) {
   display.drawRect(x, y, fwidth - 1, 81, GxEPD_BLACK);
   display.drawLine(x, y + 17, x + fwidth - 3, y + 17, GxEPD_BLACK);
   displayWheatherIcon(x + fwidth / 2, y + 43, WxForecast[index].Icon, SmallIcon);
-  drawString(x + fwidth / 2, y + 14, String(convertUnixTime(WxForecast[index].Dt + WxConditions[0].Timezone).substring(0,5)), CENTER);
-  drawString(x + fwidth / 2, y + 79, String(WxForecast[index].High, 0) + "°/" + String(WxForecast[index].Low, 0) + "°", CENTER);
+  drawString(x + fwidth / 2, y + 14, String(convertUnixTime(WxForecast[index].Dt + WxConditions[0].Timezone).substring(0,5)), "center");
+  drawString(x + fwidth / 2, y + 79, String(WxForecast[index].High, 0) + "°/" + String(WxForecast[index].Low, 0) + "°", "center");
 }
 
 //#########################################################################################
@@ -366,7 +366,7 @@ void CloudCover(int x, int y, int CCover) {
   addcloud(x - 9, y - 3, Small * 0.5, 2); // Cloud top left
   addcloud(x + 3, y - 3, Small * 0.5, 2); // Cloud top right
   addcloud(x, y,         Small * 0.5, 2); // Main cloud
-  drawString(x + 15, y - 5, String(CCover) + "%", LEFT);
+  drawString(x + 15, y - 5, String(CCover) + "%", "left");
 }
 //#########################################################################################
 void Visibility(int x, int y, String Visi) {
@@ -383,11 +383,11 @@ void Visibility(int x, int y, String Visi) {
     display.drawPixel(x + r * cos(i), 1 + y + r / 2 + r * sin(i), GxEPD_BLACK);
   }
   display.fillCircle(x, y, r / 4, GxEPD_BLACK);
-  drawString(x + 12, y - 3, Visi, LEFT);
+  drawString(x + 12, y - 3, Visi, "left");
 }
 //#########################################################################################
 void Nodata(int x, int y, bool IconSize, String IconName) {
-  drawString(x - 3, y - 10, "?", CENTER);
+  drawString(x - 3, y - 10, "?", "center");
 }
 
 float SumOfPrecip(float DataArray[], int readings) {

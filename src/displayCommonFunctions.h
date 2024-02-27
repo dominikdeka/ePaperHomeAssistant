@@ -1,13 +1,13 @@
-uint16_t drawString(int x, int y, String text, alignment align, const uint8_t *fontName = u8g2_font_helvB12_tf);
+uint16_t drawString(int x, int y, String text, String align = "left", const uint8_t *fontName = u8g2_font_helvB12_tf);
 int drawEventsDay(String date, int col1W, std::vector<String> events, int col2W);
 int wrapText(const char* text, int x, int y, int maxWidth);
 
 //#########################################################################################
-uint16_t drawString(int x, int y, String text, alignment align, const uint8_t *fontName) {
+uint16_t drawString(int x, int y, String text, String align, const uint8_t *fontName) {
   u8g2Fonts.setFont(fontName);
   uint16_t width = u8g2Fonts.getUTF8Width(text.c_str());
-  if (align == RIGHT)  x = x - width;
-  if (align == CENTER) x = x - width / 2;
+  if (align == "right")  x = x - width;
+  if (align == "center") x = x - width / 2;
   u8g2Fonts.setCursor(x, y);
   u8g2Fonts.print(text);
   return width;

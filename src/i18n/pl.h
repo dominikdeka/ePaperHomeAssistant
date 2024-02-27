@@ -75,4 +75,4 @@ const char* month_M[] = { "Styczen", "Luty", "Marzec", "Kwiecien", "Maj", "Czerw
 
 String modes[] = { "kompaktowy", "kalendarz", "pogoda"};
 
-String phases[] = { " laczenie wifi...", " pobieranie czasu...", " pobieranie odczytow...", " pobieranie kalendarza...",  " pobieranie prognozy...", " drukowanie...", "" };
+String phases[] = { "laczenie wifi...", "pobieranie czasu...", "pobieranie odczytow...", "pobieranie kalendarza...", "pobieranie prognozy...", "drukowanie..." };

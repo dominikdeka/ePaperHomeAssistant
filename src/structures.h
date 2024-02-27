@@ -1,6 +1,8 @@
 #ifndef STRUCTURES_H_
 #define STRUCTURES_H_
 
+#include <vector>
+
 typedef struct {
   byte wakeupCount;
   byte currentPhase;
@@ -18,12 +20,9 @@ typedef struct {
 } CalendarData;
 
 typedef struct {
-    const String tempName;
-    const String humName;
-    const String label;
-    String tempValue;
-    String humValue;
-} MqttTopic;
+    String topic;
+    String value;
+} MqttData;
 
 typedef struct {
   int      Dt;

@@ -2,7 +2,7 @@
 
 * create script in https://script.google.com/, use content from `scripts/appsScript.gs`, deploy it with access for everyone, replace below GOOGLE_SCRIPT_ID with deployment key value
 
-* create `credentials.h` file that contains:
+* create `src/credentials.h` file that contains:
 
 ```
 const char * ssid = "************";   // Wifi Username

@@ -1,5 +1,4 @@
-//Set your location according to OWM locations
-
+//Wheather settings
 String City             = "TORUN";                      // Your home city See: http://bulk.openweathermap.org/sample/
 String Country          = "PL";                            // Your _ISO-3166-1_two-letter_country_code country code, on OWM find your nearest city and the country code is displayed
                                                            // https://en.wikipedia.org/wiki/List_of_ISO_3166_country_codes
@@ -19,5 +18,12 @@ int daylightOffset_sec = 3600; // In the UK DST is +1hr or 3600-secs, other coun
 
 const char* Timezone = "CET-1CEST,M3.5.0,M10.5.0/3";       // Central Europe
 
-enum alignment {LEFT, RIGHT, CENTER};
-
+// MQTT settings
+String mqttTopicNames[] = {
+  "dominikdeka@gmail.com/temperature/taras",
+  "dominikdeka@gmail.com/temperature/loundry",
+  "dominikdeka@gmail.com/temperature/front",
+  "dominikdeka@gmail.com/temperature/salon",
+  "dominikdeka@gmail.com/temperature/justyna",
+  "dominikdeka@gmail.com/temperature/bedroom"
+};
