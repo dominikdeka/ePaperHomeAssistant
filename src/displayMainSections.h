@@ -4,7 +4,7 @@
 
 void displayCurrentState();
 void displayWheather();
-void displayCalendarData();
+void displayCalendarData(int viewMode);
 
 void displayMqttReadings(int leftOffset, int topOffset, int width, int height);
 void displayForecastSection(int x, int y, int w);
@@ -22,7 +22,7 @@ void displayCurrentState() {
     ? TXT_VOLTAGE + String(applicationState.voltage) + 'V'
     : TXT_CHARGE_BATTERY;
 
-  display.setPartialWindow(0, 0, display.width(), STATUS_AREA_HEIGH);
+  display.setPartialWindow(0, 0, display.width(), STATUS_SECTION_HEIGHT);
   display.firstPage();
   do
   {
@@ -36,7 +36,7 @@ void displayCurrentState() {
       if (i == applicationState.viewMode) {
         u8g2Fonts.setForegroundColor(GxEPD_WHITE);
         u8g2Fonts.setBackgroundColor(GxEPD_BLACK);
-        display.fillRect(x, 0, w + 10, STATUS_AREA_HEIGH, GxEPD_BLACK);
+        display.fillRect(x, 0, w + 10, STATUS_SECTION_HEIGHT, GxEPD_BLACK);
       }
 
       drawString(x + 5, 20, modes[i], "left", u8g2_font_helvB14_te);
@@ -52,8 +52,8 @@ void displayCurrentState() {
 }
 
 void displayWheather() {
-  const int leftOffset = CALENDAR_AREA_WIDTH;
-  const int topOffset = STATUS_AREA_HEIGH + 10;
+  const int leftOffset = LEFT_SECTION_WIDTH;
+  const int topOffset = STATUS_SECTION_HEIGHT + 10;
   const int imageHeight = 140;
   display.setPartialWindow(leftOffset, topOffset, display.width() - leftOffset, display.height() - topOffset);
   display.firstPage();
@@ -70,9 +70,9 @@ void displayWheather() {
 }
 
 
-void displayCalendarData() {
-  const int topOffset = STATUS_AREA_HEIGH + 10;
-  const int tableWidth = CALENDAR_AREA_WIDTH;
+void displayCalendarData(int viewMode) {
+  const int topOffset = STATUS_SECTION_HEIGHT + 10;
+  const int tableWidth = LEFT_SECTION_WIDTH;
   const int maxTableHeight = display.height() - topOffset;
 
   const int padding = 5;
@@ -91,15 +91,21 @@ void displayCalendarData() {
     }
   }
 
-  display.setPartialWindow(0, topOffset, CALENDAR_AREA_WIDTH, display.width());
+  display.setPartialWindow(0, topOffset, viewMode == 0 ? LEFT_SECTION_WIDTH : display.width(), display.height());
   display.firstPage();
+  byte section = 0;
   do
   {
     int currentHeight = topOffset;
     for(byte i = 0; i < daysNumber; i++) {
-      currentHeight = drawEventsDay(currentHeight, maxTableHeight, calEvents[i].start, date_max_width, calEvents[i].events, CALENDAR_AREA_WIDTH - date_max_width);
+      currentHeight = drawEventsDay(section, currentHeight, maxTableHeight, calEvents[i].start, date_max_width, calEvents[i].events, LEFT_SECTION_WIDTH - date_max_width);
       if (currentHeight == 0) {
-        break;
+        if (viewMode == 0 || viewMode == 1 && section == 1){
+          break;
+        } else {
+          section++;
+          currentHeight = topOffset;
+        }
       }
     }
   }

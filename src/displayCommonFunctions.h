@@ -1,5 +1,5 @@
 uint16_t drawString(int x, int y, String text, String align = "left", const uint8_t *fontName = u8g2_font_helvB12_tf);
-int drawEventsDay(String date, int col1W, std::vector<String> events, int col2W);
+int drawEventsDay(byte section, String date, int col1W, std::vector<String> events, int col2W);
 int wrapText(const char* text, int x, int y, int maxWidth);
 
 //#########################################################################################
@@ -13,12 +13,12 @@ uint16_t drawString(int x, int y, String text, String align, const uint8_t *font
   return width;
 }
 
-int drawEventsDay(int currentHeight, int maxTableHeight, String date, int col1W, std::vector<String> events, int col2W) {
+int drawEventsDay(byte section, int currentHeight, int maxTableHeight, String date, int col1W, std::vector<String> events, int col2W) {
     u8g2Fonts.setFont(u8g2_font_helvB14_te);
     int16_t ta = u8g2Fonts.getFontAscent(); // positive
     int16_t td = u8g2Fonts.getFontDescent(); // negative; in mathematicians view
     int dateHeight = ta - td; // text box height
-    u8g2Fonts.setCursor(0, currentHeight + dateHeight);
+    u8g2Fonts.setCursor(section * LEFT_SECTION_WIDTH, currentHeight + dateHeight);
     u8g2Fonts.print(date);
 
     u8g2Fonts.setFont(u8g2_font_luRS18_tf);
@@ -33,7 +33,7 @@ int drawEventsDay(int currentHeight, int maxTableHeight, String date, int col1W,
 
     int eventsHeight = 0;
     for(byte j = 0; j < eventsNumber; j++) {
-      eventsHeight += wrapText(events[j].c_str(), col1W + 5, currentHeight + eventsHeight, col2W);
+      eventsHeight += wrapText(events[j].c_str(), section * LEFT_SECTION_WIDTH + col1W + 5, currentHeight + eventsHeight, col2W);
       if (currentHeight + eventsHeight + lineHeight > maxTableHeight) {
         return 0;
       }

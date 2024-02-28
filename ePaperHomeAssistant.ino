@@ -6,8 +6,8 @@
 #define MINIMAL_VOLTAGE 4.5 /* Below this voltage ESP goes deep sleep forever */ 
 #define GPIO_BIT_MASK ((1ULL << GPIO_NUM_32) | (1ULL << GPIO_NUM_35))
 
-#define STATUS_AREA_HEIGH 25 /* top (status) section height (max: 480) */
-#define CALENDAR_AREA_WIDTH 400 /* left bottom (calendar) section width (max: 800) */
+#define STATUS_SECTION_HEIGHT 25 /* top (status) section height (max: 480) */
+#define LEFT_SECTION_WIDTH 400 /* left bottom (calendar) section width (max: 800) */
 
 #include "src/credentials.h"
 #include "src/settings.h"
@@ -83,7 +83,15 @@ void loop() {
     readVoltage();
     nextPhase();
   }
-  if (applicationState.currentPhase == 2) { // collecting mqtt data
+  if (applicationState.currentPhase == 2) { // collecting GCal events
+    byte Attempts = 1;
+    while (calEvents.empty() && Attempts <= MAX_ATTEMPTS) {
+      readCalendarEvents();
+      Attempts++;
+    };
+    nextPhase();
+  }
+  if (applicationState.currentPhase == 3) { // collecting mqtt data
     byte Attempts = 1;
     if (!mqttClient.connected()) {
       mqttReconnect();
@@ -93,14 +101,6 @@ void loop() {
     if(mqttDataCollected() || Attempts > MAX_ATTEMPTS) {
       nextPhase();
     }
-  }
-  if (applicationState.currentPhase == 3) { // collecting GCal events
-    byte Attempts = 1;
-    while (calEvents.empty() && Attempts <= MAX_ATTEMPTS) {
-      readCalendarEvents();
-      Attempts++;
-    };
-    nextPhase();
   }
   if (applicationState.currentPhase == 4) { // collecting wheather data
     byte Attempts = 1;
@@ -115,7 +115,7 @@ void loop() {
   }
   if (applicationState.currentPhase == 5) { // draw data on screen
     if (applicationState.viewMode == 0 || applicationState.viewMode == 1) {
-      displayCalendarData();
+      displayCalendarData(applicationState.viewMode);
     }
     if (applicationState.viewMode == 0 || applicationState.viewMode == 2) {
       displayWheather();
@@ -174,7 +174,15 @@ void setStateOnWakeup() {
 }
 
 void nextPhase() {
-  setApplicationPhase(applicationState.currentPhase + 1);
+  byte nextPhase;
+  if (applicationState.viewMode == 1 && applicationState.currentPhase == 2) { // skip reading wheather
+    nextPhase = 5;
+  } else if (applicationState.viewMode == 2 && applicationState.currentPhase == 1) { // skip reading calendar
+    nextPhase = 3;
+  } else {
+    nextPhase = applicationState.currentPhase + 1;
+  }
+  setApplicationPhase(nextPhase);
   displayCurrentState();
 }
 
