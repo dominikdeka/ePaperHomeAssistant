@@ -3,7 +3,7 @@ function doGet() {
   Logger.log(JSON.stringify(events, null, 2));
   return ContentService.createTextOutput(JSON.stringify(events)).setMimeType(ContentService.MimeType.JSON); 
 }
-const DAYS_NUMBER = 35;
+const DAYS_NUMBER = 31;
 const letters     = ['ą', 'ć', 'ę', 'ł', 'ń', 'ó', 'ś', 'ź', 'ż', 'Ą', 'Ć', 'Ę', 'Ł', 'Ń', 'Ó', 'Ś', 'Ź', 'Ż'];
 const replacement = ['a', 'c', 'e', 'l', 'n', 'o', 's', 'z', 'z', 'A', 'C', 'E', 'L', 'N', 'O', 'S', 'Z', 'Z'];
 function replacePolishLetters(text) {
@@ -88,7 +88,7 @@ function GetEvents() {
     .sort(function(a,b){
       return a.startDateTime - b.startDateTime
     })
-    .slice(0, 20)
+    .slice(0, 30)
     .map((event) => { delete event.startDateTime; return event; });
 
   results = results.reduce((acc, d) => {
