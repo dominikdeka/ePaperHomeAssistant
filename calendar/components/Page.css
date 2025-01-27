@@ -1,0 +1,39 @@
+.page-container {
+  width: 100%;
+  margin: auto auto;
+  padding-top: 30px;
+  background-color: #fff;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  flex-direction: column;
+}
+
+.page-container .page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  width: 100%;
+}
+
+.page-container .page-header > div {
+  width: 30%;
+}
+.page-container .prev-month, .page-container .next-month {
+  text-align: center;
+}
+
+.page-container .current-month {
+  margin: 30px 0;
+  width: 100%;
+}
+
+@media print {
+  .page-container {
+    page-break-before: always;
+    width: 297mm;
+    height: 210mm;
+    /* position: relative;
+    bottom: 0; */
+  }
+}

@@ -70,7 +70,7 @@ void readCalendarEvents(void)
     if (httpCode == HTTP_CODE_OK) {
       String payload = http.getString();
 
-      DynamicJsonDocument doc(2048);
+      DynamicJsonDocument doc(4096);
       DeserializationError error = deserializeJson(doc, payload);
 
       if (error) {

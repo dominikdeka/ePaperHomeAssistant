@@ -1,0 +1,58 @@
+.month-container {
+  width: 100%;
+  margin: 0 auto;
+  border: 1px solid #f00;
+  background-color: #fff;
+}
+.small.month-container {
+  border-color: black;
+  border-bottom: none;
+  border-right: none;
+}
+
+.month-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  background-color: #f7f7f7;
+  border: 1px solid #f00;
+  font-size: 22px;
+}
+.small .month-header {
+  border-color: black;
+  border-top: none;
+  border-left: none;
+  font-size: 16px;
+}
+.month-name {
+  font-size: 16px;
+}
+.days-of-week div {
+  padding: 0;
+  text-align: center;
+}
+.small .days-of-week div {
+  padding: 3px 0;
+}
+.month-header div {
+  text-align: center;
+}
+
+.month-week {
+  display: grid;
+  grid-template-columns: repeat(7, 2fr);
+}
+
+.month-day {
+  padding: 3px;
+  text-align: center;
+  border: 1px solid #f00;
+  font-size: 48px;
+}
+
+.small .month-day {
+  padding: 0;
+  font-size: 16px;
+  border-color: black;
+  border-top: none;
+  border-left: none;
+}
