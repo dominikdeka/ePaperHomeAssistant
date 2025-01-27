@@ -1,7 +1,7 @@
 .month-container {
   width: 100%;
   margin: 0 auto;
-  border: 1px solid #f00;
+  border: 1px solid black;
   background-color: #fff;
 }
 .small.month-container {
@@ -14,7 +14,7 @@
   display: grid;
   grid-template-columns: repeat(7, 1fr);
   background-color: #f7f7f7;
-  border: 1px solid #f00;
+  border: 1px solid black;
   font-size: 22px;
 }
 .small .month-header {
@@ -45,8 +45,15 @@
 .month-day {
   padding: 3px;
   text-align: center;
-  border: 1px solid #f00;
+  border: 1px solid black;
   font-size: 48px;
+  color: #dcdcdc;
+}
+.month-day.current {
+  color: black;
+}
+.month-day.holiday.current {
+  color: #f00;
 }
 
 .small .month-day {

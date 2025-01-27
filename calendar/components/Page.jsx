@@ -11,17 +11,17 @@ function Page({monthOfYear, currentYear}) {
     <div className="page-container">
       <div className="page-header">
         <div className="prev-month">
-          <Month calendarData={prevMonth.cal} month={prevMonth.month} year={prevMonth.year} size="small" />
+          <Month calendarData={prevMonth.cal} monthOfYear={monthOfYear === 1 ? 12 : monthOfYear -1} month={prevMonth.month} year={prevMonth.year} size="small" />
         </div>
         <div className="current-month-name">
           <h1>{currentMonth.month} {currentMonth.year}</h1>
         </div>
         <div className="next-month">
-          <Month calendarData={nextMonth.cal} month={nextMonth.month} year={nextMonth.year} size="small" />
+          <Month calendarData={nextMonth.cal} monthOfYear={monthOfYear === 12 ? 1 : monthOfYear + 1} month={nextMonth.month} year={nextMonth.year} size="small" />
         </div>
       </div>
       <div className="current-month">
-        <Month calendarData={currentMonth.cal} size="big" />
+        <Month calendarData={currentMonth.cal} monthOfYear={monthOfYear} size="big" />
       </div>      
     </div>
       
